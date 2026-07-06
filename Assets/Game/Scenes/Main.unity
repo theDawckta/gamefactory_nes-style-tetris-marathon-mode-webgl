@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4408912019504c05b70de0b398dedb67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game::GameOverScreen
-  _font: {fileID: 0}
+  _font: {fileID: 11400000, guid: 607965ed60588cb4d8b602b229138505, type: 2}
 --- !u!114 &256444560
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -306,7 +306,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1639cd794f8440f8237ed6c94a2d865, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game::StartScreen
-  _font: {fileID: 0}
+  _font: {fileID: 11400000, guid: 607965ed60588cb4d8b602b229138505, type: 2}
   _leaderboardWidget: {fileID: 1652530529}
 --- !u!114 &787920973
 MonoBehaviour:
@@ -427,7 +427,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4a4abda4f3b4157ac0a696db4b642c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game::GameScreen
-  _font: {fileID: 0}
+  _font: {fileID: 11400000, guid: 607965ed60588cb4d8b602b229138505, type: 2}
 --- !u!114 &951238312
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -468,7 +468,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game::NextPieceWidget
   _playfieldController: {fileID: 2008471427}
-  _font: {fileID: 0}
+  _font: {fileID: 11400000, guid: 607965ed60588cb4d8b602b229138505, type: 2}
 --- !u!114 &951238315
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -482,7 +482,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game::LevelWidget
   _playfieldController: {fileID: 2008471427}
-  _font: {fileID: 0}
+  _font: {fileID: 11400000, guid: 607965ed60588cb4d8b602b229138505, type: 2}
 --- !u!114 &951238316
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -496,7 +496,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game::LinesWidget
   _playfieldController: {fileID: 2008471427}
-  _font: {fileID: 0}
+  _font: {fileID: 11400000, guid: 607965ed60588cb4d8b602b229138505, type: 2}
 --- !u!114 &951238317
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -510,7 +510,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game::ScoreWidget
   _playfieldController: {fileID: 2008471427}
-  _font: {fileID: 0}
+  _font: {fileID: 11400000, guid: 607965ed60588cb4d8b602b229138505, type: 2}
 --- !u!114 &951238318
 MonoBehaviour:
   m_ObjectHideFlags: 0
