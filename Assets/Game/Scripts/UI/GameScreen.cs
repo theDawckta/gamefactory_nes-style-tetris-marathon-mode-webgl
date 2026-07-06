@@ -14,7 +14,7 @@ public class GameScreen : BaseScreen
     public VisualElement NextPieceRegion { get; private set; }
     public VisualElement CharacterIdleRegion { get; private set; }
 
-    private void OnEnable()
+    private void Start()
     {
         BuildUI();
     }

@@ -16,7 +16,7 @@ public class GameOverScreen : BaseScreen
     private Label _promptLabel;
     private Coroutine _blinkCoroutine;
 
-    private void OnEnable()
+    private void Start()
     {
         BuildUI();
     }

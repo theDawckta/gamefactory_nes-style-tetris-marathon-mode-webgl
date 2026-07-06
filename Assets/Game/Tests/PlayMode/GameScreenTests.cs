@@ -231,4 +231,36 @@ public class GameScreenTests
         Assert.AreEqual(FlexDirection.Row, screen.Root.style.flexDirection.value);
         Object.Destroy(screen.gameObject);
     }
+
+    [UnityTest]
+    public IEnumerator ShowHideCycle_PreservesTreeStructure()
+    {
+        var screen = CreateScreen();
+        screen.gameObject.SetActive(true);
+        yield return null;
+        var initialChildCount = screen.Root.childCount;
+        Assert.IsTrue(initialChildCount > 0, "Tree should be built after Start()");
+
+        screen.Show();
+        screen.Hide();
+        screen.Show();
+        screen.Hide();
+
+        Assert.AreEqual(initialChildCount, screen.Root.childCount,
+            "Show/Hide cycles must not rebuild the UI tree");
+        Object.Destroy(screen.gameObject);
+    }
+
+    [UnityTest]
+    public IEnumerator Hide_DoesNotDeactivateGameObject()
+    {
+        var screen = CreateScreen();
+        screen.gameObject.SetActive(true);
+        yield return null;
+        screen.Show();
+        screen.Hide();
+        Assert.IsTrue(screen.gameObject.activeSelf,
+            "GameObject must remain active after Hide()");
+        Object.Destroy(screen.gameObject);
+    }
 }

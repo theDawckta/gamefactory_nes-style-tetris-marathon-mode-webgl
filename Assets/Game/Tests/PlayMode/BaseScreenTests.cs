@@ -98,4 +98,31 @@ public class BaseScreenTests
         Assert.IsFalse(screen.IsVisible);
         Object.Destroy(go);
     }
+
+    [UnityTest]
+    public IEnumerator Hide_DoesNotDeactivateGameObject()
+    {
+        var go = new GameObject();
+        var screen = go.AddComponent<TestScreen>();
+        yield return null;
+        screen.Show();
+        screen.Hide();
+        Assert.IsTrue(go.activeSelf,
+            "Hide() must not deactivate the GameObject -- screens hide via display style only");
+        Object.Destroy(go);
+    }
+
+    [UnityTest]
+    public IEnumerator Show_OnAlreadyActiveGO_SetsDisplayFlex()
+    {
+        var go = new GameObject();
+        var screen = go.AddComponent<TestScreen>();
+        yield return null;
+        // GO is already active; Show() must not call SetActive and must set display
+        screen.Hide();
+        screen.Show();
+        Assert.AreEqual(DisplayStyle.Flex, screen.Root.style.display.value);
+        Assert.IsTrue(go.activeSelf);
+        Object.Destroy(go);
+    }
 }
