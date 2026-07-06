@@ -4,7 +4,8 @@
   "references": [
     "Game",
     "Unity.InputSystem",
-    "Unity.InputSystem.TestFramework"
+    "Unity.InputSystem.TestFramework",
+    "com.onetimegames.coresystems"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
