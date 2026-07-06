@@ -9,6 +9,7 @@ using UnityEngine.UIElements;
 public class StartScreen : BaseScreen
 {
     [SerializeField] private FontAsset _font;
+    [SerializeField] private LeaderboardWidget _leaderboardWidget;
 
     public event Action OnStartPressed;
 
@@ -20,6 +21,7 @@ public class StartScreen : BaseScreen
     private void OnEnable()
     {
         BuildUI();
+        _leaderboardWidget?.SetLeaderboardRegion(LeaderboardRegion);
     }
 
     private void BuildUI()
@@ -104,7 +106,7 @@ public class StartScreen : BaseScreen
         base.Show();
         if (_blinkCoroutine != null) StopCoroutine(_blinkCoroutine);
         _blinkCoroutine = StartCoroutine(BlinkCoroutine());
-        // TODO: trigger leaderboard refresh when LeaderboardWidget (#12) is implemented
+        _leaderboardWidget?.Refresh();
     }
 
     public override void Hide()
