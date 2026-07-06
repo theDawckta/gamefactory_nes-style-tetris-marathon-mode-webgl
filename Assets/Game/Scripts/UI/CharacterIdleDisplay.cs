@@ -102,6 +102,7 @@ public class CharacterIdleDisplay : MonoBehaviour
         _frameCount = meta.frameCount;
         _fps = meta.fps;
         _frameAccum = 0f;
+        Show();
     }
 
     private static SpriteSheetMeta TryParseMeta(string json)
