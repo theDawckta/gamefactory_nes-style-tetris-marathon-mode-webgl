@@ -18,7 +18,7 @@ public class StartScreen : BaseScreen
     private Label _promptLabel;
     private Coroutine _blinkCoroutine;
 
-    private void OnEnable()
+    private void Start()
     {
         BuildUI();
         _leaderboardWidget?.SetLeaderboardRegion(LeaderboardRegion);

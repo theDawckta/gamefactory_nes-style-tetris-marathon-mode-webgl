@@ -20,7 +20,12 @@ public abstract class BaseScreen : MonoBehaviour
 
     public virtual void Show()
     {
-        gameObject.SetActive(true);
+        // Only activate if truly inactive. In the game scene all screen GOs are always
+        // active, so this path is a no-op there. Skipping the redundant SetActive(true)
+        // prevents OnEnable from firing mid-frame and triggering tree modifications
+        // during a UIElements generateVisualContent callback.
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
         Root.style.display = DisplayStyle.Flex;
     }
 

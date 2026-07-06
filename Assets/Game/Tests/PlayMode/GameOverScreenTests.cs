@@ -265,4 +265,36 @@ public class GameOverScreenTests : InputTestFixture
         Assert.IsNotNull(screen.GetComponent<UIDocument>());
         UnityEngine.Object.Destroy(screen.gameObject);
     }
+
+    [UnityTest]
+    public IEnumerator ShowHideCycle_PreservesTreeStructure()
+    {
+        var screen = CreateScreen();
+        screen.gameObject.SetActive(true);
+        yield return null;
+        var initialChildCount = screen.Root.childCount;
+        Assert.IsTrue(initialChildCount > 0, "Tree should be built after Start()");
+
+        screen.ShowWithResult(100, false);
+        screen.Hide();
+        screen.ShowWithResult(200, true);
+        screen.Hide();
+
+        Assert.AreEqual(initialChildCount, screen.Root.childCount,
+            "Show/Hide cycles must not rebuild the UI tree");
+        UnityEngine.Object.Destroy(screen.gameObject);
+    }
+
+    [UnityTest]
+    public IEnumerator Hide_DoesNotDeactivateGameObject()
+    {
+        var screen = CreateScreen();
+        screen.gameObject.SetActive(true);
+        yield return null;
+        screen.ShowWithResult(0, false);
+        screen.Hide();
+        Assert.IsTrue(screen.gameObject.activeSelf,
+            "GameObject must remain active after Hide()");
+        UnityEngine.Object.Destroy(screen.gameObject);
+    }
 }
