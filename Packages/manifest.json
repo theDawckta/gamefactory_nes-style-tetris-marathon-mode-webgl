@@ -5,6 +5,7 @@
     "com.onetimegames.coreassets": "https://github.com/theDawckta/ai-game-factory.git?path=/CoreAssets",
     "com.onetimegames.coresystems": "https://github.com/theDawckta/ai-game-factory.git?path=/CoreSystems",
     "com.unity.inputsystem": "1.19.0",
+    "com.unity.textmeshpro": "4.0.0",
     "com.unity.render-pipelines.universal": "17.5.0",
     "com.unity.test-framework": "1.7.0",
     "com.unity.ugui": "2.5.0",
