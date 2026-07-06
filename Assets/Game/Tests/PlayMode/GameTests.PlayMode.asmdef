@@ -2,7 +2,9 @@
   "name": "GameTests.PlayMode",
   "rootNamespace": "",
   "references": [
-    "Game"
+    "Game",
+    "Unity.InputSystem",
+    "Unity.InputSystem.TestFramework"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
