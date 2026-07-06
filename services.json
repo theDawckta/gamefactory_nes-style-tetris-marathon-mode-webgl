@@ -1,0 +1,8 @@
+[
+  {
+    "name": "tetris-leaderboard",
+    "source": "LeaderboardService",
+    "configKey": "leaderboardUrl",
+    "kvBindings": ["TETRIS_KV"]
+  }
+]
