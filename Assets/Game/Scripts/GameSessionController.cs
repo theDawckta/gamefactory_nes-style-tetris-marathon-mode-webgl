@@ -21,6 +21,8 @@ public class GameSessionController : MonoBehaviour
 
     private IEnumerator Start()
     {
+        EnsureCamera();
+
         if (ConfigService.Instance != null)
             yield return ConfigService.Instance.EnsureLoaded();
 
@@ -36,6 +38,22 @@ public class GameSessionController : MonoBehaviour
 
         SetupStateMachine();
         _stateMachine.TransitionTo("StartScreen");
+    }
+
+    // This is a pure UI Toolkit (screen-space overlay) game with no world geometry, so the scene
+    // ships without a Camera -- which makes Unity show the "No cameras rendering" overlay and
+    // leaves a WebGL build with nothing clearing the screen. Create a minimal clear-only camera
+    // at runtime if none exists (renders no objects; the UITK panel draws on top).
+    private void EnsureCamera()
+    {
+        if (Camera.main != null) return;
+        var camGo = new GameObject("Main Camera");
+        camGo.tag = "MainCamera";
+        var cam = camGo.AddComponent<Camera>();
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = Color.black;
+        cam.cullingMask = 0;
+        cam.orthographic = true;
     }
 
     private void SetupStateMachine()

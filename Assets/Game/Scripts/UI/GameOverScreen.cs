@@ -15,6 +15,7 @@ public class GameOverScreen : BaseScreen
     private Label _scoreValueLabel;
     private Label _promptLabel;
     private Coroutine _blinkCoroutine;
+    private int _shownFrame = -1;
 
     private void Start()
     {
@@ -88,6 +89,10 @@ public class GameOverScreen : BaseScreen
     private void Update()
     {
         if (!IsVisible) return;
+        // Ignore the frame this screen became visible: the Down press that ended the game (and
+        // transitioned us here) still reads as wasPressedThisFrame this frame, and would
+        // otherwise immediately fire OnReturnPressed and skip the Game Over screen entirely.
+        if (Time.frameCount == _shownFrame) return;
         if (Keyboard.current != null && Keyboard.current.downArrowKey.wasPressedThisFrame)
             OnReturnPressed?.Invoke();
     }
@@ -95,6 +100,7 @@ public class GameOverScreen : BaseScreen
     public void ShowWithResult(int finalScore, bool isNewHighScore)
     {
         base.Show();
+        _shownFrame = Time.frameCount;
         if (_scoreValueLabel != null)
             _scoreValueLabel.text = finalScore.ToString();
         var highScoreBannerRegion = Root.Q<VisualElement>("highScoreBannerRegion");
@@ -120,8 +126,10 @@ public class GameOverScreen : BaseScreen
         {
             yield return new WaitForSeconds(0.8f);
             if (_promptLabel == null) yield break;
-            var current = _promptLabel.style.display.value;
-            _promptLabel.style.display = current == DisplayStyle.None ? DisplayStyle.Flex : DisplayStyle.None;
+            // Toggle visibility (not display) so the label keeps its layout space and the
+            // centered column does not reflow/jump every blink.
+            var current = _promptLabel.style.visibility.value;
+            _promptLabel.style.visibility = current == Visibility.Hidden ? Visibility.Visible : Visibility.Hidden;
         }
     }
 }

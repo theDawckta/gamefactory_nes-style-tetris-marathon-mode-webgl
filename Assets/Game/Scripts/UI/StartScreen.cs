@@ -17,6 +17,7 @@ public class StartScreen : BaseScreen
 
     private Label _promptLabel;
     private Coroutine _blinkCoroutine;
+    private int _shownFrame = -1;
 
     private void Start()
     {
@@ -97,6 +98,10 @@ public class StartScreen : BaseScreen
     private void Update()
     {
         if (!IsVisible) return;
+        // Ignore the frame this screen became visible: the same physical Down press that
+        // transitioned us here still reads as wasPressedThisFrame, and would otherwise cascade
+        // straight into starting a game before the player sees the menu.
+        if (Time.frameCount == _shownFrame) return;
         if (Keyboard.current != null && Keyboard.current.downArrowKey.wasPressedThisFrame)
             OnStartPressed?.Invoke();
     }
@@ -104,6 +109,7 @@ public class StartScreen : BaseScreen
     public override void Show()
     {
         base.Show();
+        _shownFrame = Time.frameCount;
         if (_blinkCoroutine != null) StopCoroutine(_blinkCoroutine);
         _blinkCoroutine = StartCoroutine(BlinkCoroutine());
         _leaderboardWidget?.Refresh();
@@ -125,8 +131,10 @@ public class StartScreen : BaseScreen
         {
             yield return new WaitForSeconds(0.8f);
             if (_promptLabel == null) yield break;
-            var current = _promptLabel.style.display.value;
-            _promptLabel.style.display = current == DisplayStyle.None ? DisplayStyle.Flex : DisplayStyle.None;
+            // Toggle visibility (not display) so the label keeps its layout space and the
+            // centered column does not reflow/jump every blink.
+            var current = _promptLabel.style.visibility.value;
+            _promptLabel.style.visibility = current == Visibility.Hidden ? Visibility.Visible : Visibility.Hidden;
         }
     }
 }

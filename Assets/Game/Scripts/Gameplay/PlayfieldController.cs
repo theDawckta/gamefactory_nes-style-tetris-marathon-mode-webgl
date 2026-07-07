@@ -24,6 +24,7 @@ public class PlayfieldController : MonoBehaviour
     private bool _isRunning;
     private bool _isLockDelay;
     private float _gravityAccum;
+    private bool _wasSoftDropping;
     private float _lockDelayTimer;
     private int _lockResetCount;
     private bool _lastActionWasRotation;
@@ -50,6 +51,7 @@ public class PlayfieldController : MonoBehaviour
         CurrentLines = 0;
         CurrentLevel = 0;
         _gravityAccum = 0f;
+        _wasSoftDropping = false;
         _isLockDelay = false;
         _lockDelayTimer = 0f;
         _lockResetCount = 0;
@@ -119,14 +121,27 @@ public class PlayfieldController : MonoBehaviour
         }
 
         bool softDrop = _input != null && _input.IsSoftDropping;
+
+        // Reset the accumulator whenever soft-drop toggles. Without this, slow gravity that has
+        // been building up (e.g. ~0.7s at level 0) would all convert into fast 0.05s steps the
+        // instant Down is pressed, slamming the piece down many rows at once (the "instant drop"
+        // bug). Starting fresh on the transition keeps the drop speed consistent.
+        if (softDrop != _wasSoftDropping)
+        {
+            _gravityAccum = 0f;
+            _wasSoftDropping = softDrop;
+        }
+
         float interval = softDrop
             ? Mathf.Min(NESGravityTable.GetSecondsPerRow(CurrentLevel), SoftDropInterval)
             : NESGravityTable.GetSecondsPerRow(CurrentLevel);
 
         _gravityAccum += Time.deltaTime;
-        while (_gravityAccum >= interval && !_isLockDelay)
+        int steps = 0;
+        while (_gravityAccum >= interval && !_isLockDelay && steps < 20)
         {
             _gravityAccum -= interval;
+            steps++;
             TryMoveDown(softDrop);
         }
     }

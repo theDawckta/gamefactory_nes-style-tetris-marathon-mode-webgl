@@ -13,6 +13,7 @@ public class NextPieceWidget : MonoBehaviour
     private TetrominoType _lastType;
 
     private static readonly Color EmptyColor = new Color(0.05f, 0.05f, 0.05f);
+    private static readonly Color EmptyBorder = new Color(0.15f, 0.15f, 0.15f);
 
     public void Initialize(VisualElement nextPieceRegion, PlayfieldController controller)
     {
@@ -50,6 +51,7 @@ public class NextPieceWidget : MonoBehaviour
                 cell.style.width = 20;
                 cell.style.height = 20;
                 cell.style.backgroundColor = new StyleColor(EmptyColor);
+                SetBorder(cell, EmptyBorder);
                 gridContainer.Add(cell);
                 _cells[col, row] = cell;
             }
@@ -91,7 +93,10 @@ public class NextPieceWidget : MonoBehaviour
 
         for (int row = 0; row < 4; row++)
             for (int col = 0; col < 4; col++)
+            {
                 _cells[col, row].style.backgroundColor = new StyleColor(EmptyColor);
+                SetBorder(_cells[col, row], EmptyBorder);
+            }
 
         var offsets = TetrominoData.GetCells(type, 0);
 
@@ -117,8 +122,26 @@ public class NextPieceWidget : MonoBehaviour
             int col = c.x - minX + padX;
             int row = (maxY - c.y) + padY;
             if (col >= 0 && col < 4 && row >= 0 && row < 4)
+            {
                 _cells[col, row].style.backgroundColor = new StyleColor(pieceColor);
+                SetBorder(_cells[col, row], new Color(
+                    Mathf.Max(0, pieceColor.r - 0.2f),
+                    Mathf.Max(0, pieceColor.g - 0.2f),
+                    Mathf.Max(0, pieceColor.b - 0.2f)));
+            }
         }
+    }
+
+    private static void SetBorder(VisualElement cell, Color color)
+    {
+        cell.style.borderTopWidth = 1;
+        cell.style.borderBottomWidth = 1;
+        cell.style.borderLeftWidth = 1;
+        cell.style.borderRightWidth = 1;
+        cell.style.borderTopColor = new StyleColor(color);
+        cell.style.borderBottomColor = new StyleColor(color);
+        cell.style.borderLeftColor = new StyleColor(color);
+        cell.style.borderRightColor = new StyleColor(color);
     }
 
     private void OnDestroy()

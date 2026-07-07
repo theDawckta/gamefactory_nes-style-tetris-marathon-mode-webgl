@@ -53,9 +53,9 @@ public class PlayfieldRenderer : MonoBehaviour
         var activeCells = new bool[PlayfieldController.GridWidth, PlayfieldController.GridHeight];
         var pieces = TetrominoData.GetCells(_playfieldController.CurrentPieceType, _playfieldController.CurrentPieceRotation);
         var piecePos = _playfieldController.CurrentPiecePosition;
-        Color rawPieceColor = TetrominoData.GetColor(_playfieldController.CurrentPieceType);
-        // Slightly brighter tint to distinguish active piece from locked cells
-        Color activePieceColor = Color.Lerp(rawPieceColor, Color.white, 0.25f);
+        // Active (falling) piece uses the exact same color as it will have once locked, so a
+        // piece does not visibly change color the moment it settles.
+        Color activePieceColor = TetrominoData.GetColor(_playfieldController.CurrentPieceType);
 
         foreach (var c in pieces)
         {
