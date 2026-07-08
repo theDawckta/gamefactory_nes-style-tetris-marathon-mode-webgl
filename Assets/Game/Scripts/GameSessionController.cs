@@ -18,10 +18,12 @@ public class GameSessionController : MonoBehaviour
     private GameStateMachine _stateMachine;
     private List<LeaderboardEntry> _cachedTopFive;
     private int _finalScore;
+    private MobileControls _mobileControls;
 
     private IEnumerator Start()
     {
         EnsureCamera();
+        _mobileControls = MobileControls.Spawn(tetrisInputHandler);
 
         if (ConfigService.Instance != null)
             yield return ConfigService.Instance.EnsureLoaded();
@@ -69,6 +71,7 @@ public class GameSessionController : MonoBehaviour
         gameScreen?.Hide();
         gameOverScreen?.Hide();
         startScreen?.Show();
+        _mobileControls?.Hide();
         if (leaderboardClient != null)
             StartCoroutine(leaderboardClient.FetchTopFive(
                 entries => _cachedTopFive = entries,
@@ -91,6 +94,7 @@ public class GameSessionController : MonoBehaviour
         startScreen?.Hide();
         gameOverScreen?.Hide();
         gameScreen?.Show();
+        _mobileControls?.Show();
         playfieldController?.StartGame();
         tetrisInputHandler?.Enable();
         if (playfieldController != null)
@@ -112,6 +116,7 @@ public class GameSessionController : MonoBehaviour
     private void EnterGameOver()
     {
         gameScreen?.Hide();
+        _mobileControls?.Hide();
         tetrisInputHandler?.Disable();
 
         var isNewHighScore = DetermineNewHighScore(_finalScore);
