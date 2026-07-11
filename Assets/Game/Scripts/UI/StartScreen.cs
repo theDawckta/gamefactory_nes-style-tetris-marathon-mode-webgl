@@ -45,7 +45,7 @@ public class StartScreen : BaseScreen
         if (_font != null) title.style.unityFontDefinition = new StyleFontDefinition(_font);
         root.Add(title);
 
-        _promptLabel = new Label("PRESS DOWN TO START");
+        _promptLabel = new Label("PRESS DOWN OR TAP TO START");
         _promptLabel.style.fontSize = 24;
         _promptLabel.style.color = new StyleColor(Color.white);
         _promptLabel.style.marginBottom = 32;
@@ -102,7 +102,11 @@ public class StartScreen : BaseScreen
         // transitioned us here still reads as wasPressedThisFrame, and would otherwise cascade
         // straight into starting a game before the player sees the menu.
         if (Time.frameCount == _shownFrame) return;
-        if (Keyboard.current != null && Keyboard.current.downArrowKey.wasPressedThisFrame)
+        // Down arrow (desktop) OR any tap/click (mobile -- no keyboard). Pointer.current covers
+        // touchscreen and mouse; read via the Input System, the same path the down-arrow uses.
+        bool down = Keyboard.current != null && Keyboard.current.downArrowKey.wasPressedThisFrame;
+        bool tapped = Pointer.current != null && Pointer.current.press.wasPressedThisFrame;
+        if (down || tapped)
             OnStartPressed?.Invoke();
     }
 
