@@ -12,9 +12,6 @@ public class MobileTetrisInput : MonoBehaviour
 {
     [SerializeField] private PlayfieldController _playfieldController;
 
-    private const float DasDelay = 0.170f;
-    private const float DasRepeat = 0.050f;
-
     private GestureZone _leftZone;
     private GestureZone _rightZone;
     private bool _inputEnabled;
@@ -30,7 +27,7 @@ public class MobileTetrisInput : MonoBehaviour
     private IEnumerator Start()
     {
         PanelSettings panelSettings = null;
-        foreach (var doc in FindObjectsByType<UIDocument>(FindObjectsSortMode.None))
+        foreach (var doc in FindObjectsByType<UIDocument>(FindObjectsInactive.Include))
             if (doc.panelSettings != null) { panelSettings = doc.panelSettings; break; }
         if (panelSettings == null) yield break;
 
@@ -52,7 +49,7 @@ public class MobileTetrisInput : MonoBehaviour
         _leftZone = leftGo.AddComponent<GestureZone>();
         _leftZone.Configure(new Rect(0f, 0f, 50f, 100f));
         _leftZone.SetHoldRepeatEnabled(true);
-        _leftZone.SetHoldRepeat(DasDelay, DasRepeat);
+        _leftZone.SetHoldRepeat(TetrisInputHandler.DasDelay, TetrisInputHandler.DasRepeat);
 
         var rightGo = new GameObject("RightGestureZone");
         rightGo.transform.SetParent(overlayGo.transform, false);
