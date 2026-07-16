@@ -67,6 +67,12 @@ public class PlayfieldController : MonoBehaviour
         _isRunning = false;
     }
 
+    public bool IsRunning => _isRunning;
+
+    public void Pause() => _isRunning = false;
+
+    public void Resume() => _isRunning = true;
+
     private void Update()
     {
         if (!_isRunning) return;
