@@ -16,11 +16,15 @@ public class SceneBootstrapper : MonoBehaviour
         // the shared PanelSettings switches to match-width so the landscape-authored layout
         // fits across the screen instead of cropping the HUD; the full-screen gesture zones
         // keep covering the whole physical screen either way.
+        // CONTENT-FIT 440: the visible content row is ~360 reference units wide (playfield
+        // 200 + NEXT ~96 + score sidebar ~60), centered in the 1200-unit reference canvas --
+        // fitting the FULL canvas made the game tiny in portrait. 440 (~20% margin) makes
+        // the content fill the screen width instead.
         var doc = GetComponent<UIDocument>();
         if (doc != null && doc.panelSettings != null)
         {
             var opm = gameObject.AddComponent<OrientationPanelMatch>();
-            opm.Configure(doc.panelSettings);
+            opm.Configure(doc.panelSettings, 440f);
         }
     }
 
