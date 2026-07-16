@@ -4,6 +4,7 @@ using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.UIElements;
 
 public class GameSessionControllerTests
 {
@@ -241,5 +242,165 @@ public class GameSessionControllerTests
         target.GetType()
             .GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)
             ?.SetValue(target, value);
+    }
+
+    // ── Pause / Resume ──────────────────────────────────────────────────────────
+
+    [UnityTest]
+    public IEnumerator Pause_DelegatesToPlayfieldPause()
+    {
+        _controller.StartGame();
+        yield return null;
+        Assert.IsTrue(GetIsRunning(_playfield), "Precondition: playfield must be running");
+        _controller.Pause();
+        Assert.IsFalse(GetIsRunning(_playfield), "Pause() must stop the playfield");
+    }
+
+    [UnityTest]
+    public IEnumerator Resume_DelegatesToPlayfieldResume()
+    {
+        _controller.StartGame();
+        yield return null;
+        _controller.Pause();
+        Assert.IsFalse(GetIsRunning(_playfield), "Precondition: playfield must be paused");
+        _controller.Resume();
+        Assert.IsTrue(GetIsRunning(_playfield), "Resume() must restart the playfield");
+    }
+
+    [UnityTest]
+    public IEnumerator Pause_BeforeGameStarted_DoesNotThrow()
+    {
+        Assert.DoesNotThrow(() => _controller.Pause());
+        yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator Resume_BeforeGameStarted_DoesNotThrow()
+    {
+        Assert.DoesNotThrow(() => _controller.Resume());
+        yield return null;
+    }
+
+    // ── First-launch tutorial trigger ───────────────────────────────────────────
+
+    private TutorialScreen CreateTutorialScreen()
+    {
+        var go = new GameObject("TutorialScreen");
+        go.SetActive(false);
+        var uiDoc = go.AddComponent<UIDocument>();
+        uiDoc.panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+        var screen = go.AddComponent<TutorialScreen>();
+        go.SetActive(true);
+        return screen;
+    }
+
+    [UnityTest]
+    public IEnumerator FirstLaunch_ShowsTutorialOnStartGame()
+    {
+        PlayerPrefs.DeleteKey("tetris_tutorial_seen");
+        var ts = CreateTutorialScreen();
+        SetField(_controller, "tutorialScreen", ts);
+
+        yield return null; // let tutorial screen Start() run
+        _controller.StartGame();
+        yield return null;
+
+        Assert.IsTrue(ts.IsVisible, "Tutorial must be visible on first launch");
+        Object.Destroy(ts.gameObject);
+        PlayerPrefs.DeleteKey("tetris_tutorial_seen");
+    }
+
+    [UnityTest]
+    public IEnumerator FirstLaunch_DoesNotStartPlayfieldBeforeTutorialDismissed()
+    {
+        PlayerPrefs.DeleteKey("tetris_tutorial_seen");
+        var ts = CreateTutorialScreen();
+        SetField(_controller, "tutorialScreen", ts);
+
+        yield return null;
+        _controller.StartGame();
+        yield return null;
+
+        Assert.IsFalse(GetIsRunning(_playfield),
+            "Playfield must not run until the tutorial is dismissed on first launch");
+        Object.Destroy(ts.gameObject);
+        PlayerPrefs.DeleteKey("tetris_tutorial_seen");
+    }
+
+    [UnityTest]
+    public IEnumerator FirstLaunchDismiss_StartsPlayfield()
+    {
+        PlayerPrefs.DeleteKey("tetris_tutorial_seen");
+        var ts = CreateTutorialScreen();
+        SetField(_controller, "tutorialScreen", ts);
+
+        yield return null;
+        _controller.StartGame();
+        yield return null; // tutorial visible; game not started
+
+        ts.Dismiss();       // player dismisses tutorial
+        yield return null;
+
+        Assert.IsTrue(GetIsRunning(_playfield),
+            "Playfield must start after tutorial is dismissed on first launch");
+        Object.Destroy(ts.gameObject);
+        PlayerPrefs.DeleteKey("tetris_tutorial_seen");
+    }
+
+    [UnityTest]
+    public IEnumerator FirstLaunchDismiss_EnablesInputHandler()
+    {
+        PlayerPrefs.DeleteKey("tetris_tutorial_seen");
+        var ts = CreateTutorialScreen();
+        SetField(_controller, "tutorialScreen", ts);
+        // _inputEnabled defaults to true; disable first so we can verify Enable() is called.
+        _inputHandler.Disable();
+
+        yield return null;
+        _controller.StartGame();
+        yield return null;
+        Assert.IsFalse(GetInputEnabled(_inputHandler),
+            "Input must remain disabled while tutorial is shown (Enable() is deferred)");
+
+        ts.Dismiss();
+        yield return null;
+
+        Assert.IsTrue(GetInputEnabled(_inputHandler),
+            "Input handler must be enabled after tutorial is dismissed on first launch");
+        Object.Destroy(ts.gameObject);
+        PlayerPrefs.DeleteKey("tetris_tutorial_seen");
+    }
+
+    [UnityTest]
+    public IEnumerator ReturningPlayer_DoesNotShowTutorial()
+    {
+        PlayerPrefs.SetInt("tetris_tutorial_seen", 1);
+        var ts = CreateTutorialScreen();
+        SetField(_controller, "tutorialScreen", ts);
+
+        yield return null;
+        _controller.StartGame();
+        yield return null;
+
+        Assert.IsFalse(ts.IsVisible, "Tutorial must NOT be shown for a returning player");
+        Object.Destroy(ts.gameObject);
+        PlayerPrefs.DeleteKey("tetris_tutorial_seen");
+    }
+
+    [UnityTest]
+    public IEnumerator ReturningPlayer_StartsPlayfieldImmediately()
+    {
+        PlayerPrefs.SetInt("tetris_tutorial_seen", 1);
+        var ts = CreateTutorialScreen();
+        SetField(_controller, "tutorialScreen", ts);
+
+        yield return null;
+        _controller.StartGame();
+        yield return null;
+
+        Assert.IsTrue(GetIsRunning(_playfield),
+            "Playfield must start immediately for a returning player");
+        Object.Destroy(ts.gameObject);
+        PlayerPrefs.DeleteKey("tetris_tutorial_seen");
     }
 }
