@@ -390,6 +390,77 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &916822263
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 916822266}
+  - component: {fileID: 916822265}
+  - component: {fileID: 916822264}
+  m_Layer: 0
+  m_Name: TutorialScreen
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &916822264
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 916822263}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb0b8f427bca1724495a8788338f57c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game::TutorialScreen
+  _playfieldController: {fileID: 2008471427}
+  _diagramTexture: {fileID: 0}
+  _font: {fileID: 11400000, guid: 607965ed60588cb4d8b602b229138505, type: 2}
+--- !u!114 &916822265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 916822263}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: 877307236914e9142809caefea955edc, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 0}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!4 &916822266
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 916822263}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &951238310
 GameObject:
   m_ObjectHideFlags: 0
@@ -408,6 +479,7 @@ GameObject:
   - component: {fileID: 951238314}
   - component: {fileID: 951238313}
   - component: {fileID: 951238312}
+  - component: {fileID: 951238321}
   m_Layer: 0
   m_Name: GameScreen
   m_TagString: Untagged
@@ -441,6 +513,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game::SceneBootstrapper
   _playfieldController: {fileID: 2008471427}
+  _tutorialScreen: {fileID: 916822264}
 --- !u!114 &951238313
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -562,6 +635,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &951238321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 951238310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad84ca5830dc4351b2c2ebd9d41a1372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game::HelpButtonWidget
+  _tutorialScreen: {fileID: 916822264}
+  _font: {fileID: 11400000, guid: 607965ed60588cb4d8b602b229138505, type: 2}
 --- !u!1 &1106497455
 GameObject:
   m_ObjectHideFlags: 0
@@ -836,3 +923,4 @@ SceneRoots:
   - {fileID: 1652530530}
   - {fileID: 1783595962}
   - {fileID: 504703804}
+  - {fileID: 916822266}

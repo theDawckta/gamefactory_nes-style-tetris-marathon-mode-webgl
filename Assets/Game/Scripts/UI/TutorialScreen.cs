@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements;
@@ -8,6 +9,8 @@ public class TutorialScreen : BaseScreen
     [SerializeField] private PlayfieldController _playfieldController;
     [SerializeField] private Texture2D _diagramTexture;
     [SerializeField] private FontAsset _font;
+
+    public event Action OnHide;
 
     private int _shownFrame = -1;
 
@@ -141,5 +144,6 @@ public class TutorialScreen : BaseScreen
     {
         base.Hide();
         _playfieldController?.Resume();
+        OnHide?.Invoke();
     }
 }
