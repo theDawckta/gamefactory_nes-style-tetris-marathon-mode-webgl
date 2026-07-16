@@ -6,6 +6,7 @@ using UnityEngine;
 public class SceneBootstrapper : MonoBehaviour
 {
     [SerializeField] private PlayfieldController _playfieldController;
+    [SerializeField] private TutorialScreen _tutorialScreen;
 
     private IEnumerator Start()
     {
@@ -26,5 +27,6 @@ public class SceneBootstrapper : MonoBehaviour
         GetComponent<LevelWidget>()?.Initialize(gs.LevelRegion, _playfieldController);
         GetComponent<NextPieceWidget>()?.Initialize(gs.NextPieceRegion, _playfieldController);
         GetComponent<InGameCharacterWidget>()?.Initialize(gs.CharacterIdleRegion);
+        GetComponent<HelpButtonWidget>()?.Initialize(gs.Root, _tutorialScreen);
     }
 }
