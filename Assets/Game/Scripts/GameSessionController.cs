@@ -19,14 +19,14 @@ public class GameSessionController : MonoBehaviour
     private GameStateMachine _stateMachine;
     private List<LeaderboardEntry> _cachedTopFive;
     private int _finalScore;
-    private MobileControls _mobileControls;
+    private MobileTetrisInput _mobileTetrisInput;
     // Tracks whether the tutorial is pending completion before the first game start.
     private bool _firstLaunchTutorialPending;
 
     private IEnumerator Start()
     {
         EnsureCamera();
-        _mobileControls = MobileControls.Spawn(tetrisInputHandler);
+        _mobileTetrisInput = MobileTetrisInput.Spawn(playfieldController);
 
         if (ConfigService.Instance != null)
             yield return ConfigService.Instance.EnsureLoaded();
@@ -74,7 +74,7 @@ public class GameSessionController : MonoBehaviour
         gameScreen?.Hide();
         gameOverScreen?.Hide();
         startScreen?.Show();
-        _mobileControls?.Hide();
+        _mobileTetrisInput?.Disable();
         if (leaderboardClient != null)
             StartCoroutine(leaderboardClient.FetchTopFive(
                 entries => _cachedTopFive = entries,
@@ -97,7 +97,7 @@ public class GameSessionController : MonoBehaviour
         startScreen?.Hide();
         gameOverScreen?.Hide();
         gameScreen?.Show();
-        _mobileControls?.Show();
+        _mobileTetrisInput?.Enable();
 
         if (playfieldController != null)
             playfieldController.OnGameOver += OnGameOver;
@@ -148,7 +148,7 @@ public class GameSessionController : MonoBehaviour
     private void EnterGameOver()
     {
         gameScreen?.Hide();
-        _mobileControls?.Hide();
+        _mobileTetrisInput?.Disable();
         tetrisInputHandler?.Disable();
 
         var isNewHighScore = DetermineNewHighScore(_finalScore);

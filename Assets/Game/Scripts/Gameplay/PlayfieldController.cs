@@ -339,6 +339,51 @@ public class PlayfieldController : MonoBehaviour
         return false;
     }
 
+    public void MoveLeft()
+    {
+        if (!_isRunning) return;
+        var newPos = CurrentPiecePosition + new Vector2Int(-1, 0);
+        if (!Collides(CurrentPieceType, CurrentPieceRotation, newPos))
+        {
+            CurrentPiecePosition = newPos;
+            _lastActionWasRotation = false;
+            if (_isLockDelay) ResetLockDelay();
+        }
+    }
+
+    public void MoveRight()
+    {
+        if (!_isRunning) return;
+        var newPos = CurrentPiecePosition + new Vector2Int(1, 0);
+        if (!Collides(CurrentPieceType, CurrentPieceRotation, newPos))
+        {
+            CurrentPiecePosition = newPos;
+            _lastActionWasRotation = false;
+            if (_isLockDelay) ResetLockDelay();
+        }
+    }
+
+    // Moves the piece down one step. Resets _gravityAccum so gravity does not also fire
+    // immediately after, which would double-drop the piece on the same frame.
+    public void SoftDrop()
+    {
+        if (!_isRunning || _isLockDelay) return;
+        TryMoveDown(true);
+        _gravityAccum = 0f;
+    }
+
+    public void Rotate()
+    {
+        if (!_isRunning) return;
+        int newRot = (CurrentPieceRotation + 1) & 3;
+        if (!Collides(CurrentPieceType, newRot, CurrentPiecePosition))
+        {
+            CurrentPieceRotation = newRot;
+            _lastActionWasRotation = true;
+            if (_isLockDelay) ResetLockDelay();
+        }
+    }
+
     public TetrominoType? GetCell(int x, int y)
     {
         if (x < 0 || x >= GridWidth || y < 0 || y >= GridHeight) return null;
@@ -351,4 +396,5 @@ public class PlayfieldController : MonoBehaviour
         if (cell == null) return Color.clear;
         return TetrominoData.GetColor(cell.Value);
     }
+
 }

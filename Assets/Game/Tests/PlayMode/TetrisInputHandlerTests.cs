@@ -148,32 +148,6 @@ public class TetrisInputHandlerTests : InputTestFixture
     }
 
     [UnityTest]
-    public IEnumerator BindVirtualControls_Null_IsSafeAndKeyboardStillWorks()
-    {
-        Assert.DoesNotThrow(() => _handler.BindVirtualControls(null, null));
-        Press(_keyboard.rightArrowKey);
-        yield return null;
-        Assert.AreEqual(1, _handler.MoveDirection);
-    }
-
-    [UnityTest]
-    public IEnumerator VirtualControlsBound_KeyboardStillDrivesInput()
-    {
-        // With no MobileControlsOverlay in the scene the controls self-disable in Start and
-        // report no input (D-pad Direction stays zero), so the keyboard path must be unaffected.
-        var dpad = _go.AddComponent<OneTimeGames.CoreSystems.VirtualDPad>();
-        var rotate = _go.AddComponent<OneTimeGames.CoreSystems.VirtualButton>();
-        _handler.BindVirtualControls(dpad, rotate);
-        yield return null;
-
-        Press(_keyboard.leftArrowKey);
-        yield return null;
-        Assert.AreEqual(-1, _handler.MoveDirection);
-        Assert.IsFalse(_handler.IsSoftDropping);
-        Assert.IsFalse(_handler.RotatePressedThisFrame);
-    }
-
-    [UnityTest]
     public IEnumerator DAS_HoldingLeft_FiresMultipleTimes()
     {
         Press(_keyboard.leftArrowKey);
