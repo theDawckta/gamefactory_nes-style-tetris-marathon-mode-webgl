@@ -77,15 +77,21 @@ public class GameScreen : BaseScreen
         root.Add(leftSidebar);
         root.Add(PlayfieldRegion);
         root.Add(rightSidebar);
+
+        ApplyInitialHidden(); // no boot-frame flash before the state machine's first transition
     }
 
     public override void Show()
     {
         base.Show();
+        // The '?' button lives in its own always-on-top UIDocument (see HelpButtonWidget),
+        // so it no longer inherits this screen's visibility -- sync it explicitly.
+        GetComponent<HelpButtonWidget>()?.SetGameScreenVisible(true);
     }
 
     public override void Hide()
     {
         base.Hide();
+        GetComponent<HelpButtonWidget>()?.SetGameScreenVisible(false);
     }
 }

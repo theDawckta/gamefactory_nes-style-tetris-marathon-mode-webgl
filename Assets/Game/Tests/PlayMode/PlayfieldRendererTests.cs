@@ -190,7 +190,7 @@ public class PlayfieldRendererTests
     // ── Rendering: active piece ───────────────────────────────────────────────
 
     [UnityTest]
-    public IEnumerator Update_ActivePiece_DisplaysBrighterTintAtCurrentPosition()
+    public IEnumerator Update_ActivePiece_DisplaysPieceColorAtCurrentPosition()
     {
         var go = Track(new GameObject());
         var renderer = go.AddComponent<PlayfieldRenderer>();
@@ -206,7 +206,10 @@ public class PlayfieldRendererTests
         var pos = controller.CurrentPiecePosition;
         var pieces = TetrominoData.GetCells(controller.CurrentPieceType, controller.CurrentPieceRotation);
         Color rawColor = TetrominoData.GetColor(controller.CurrentPieceType);
-        Color expectedColor = Color.Lerp(rawColor, Color.white, 0.25f);
+        // The active (falling) piece deliberately uses the exact same color it will have
+        // once locked, so a piece does not visibly change color the moment it settles
+        // (see PlayfieldRenderer) -- no brighter lerp.
+        Color expectedColor = rawColor;
 
         foreach (var c in pieces)
         {

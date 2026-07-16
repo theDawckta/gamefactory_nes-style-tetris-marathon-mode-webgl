@@ -144,14 +144,16 @@ public class StartScreenTests : InputTestFixture
 
         // title=0, prompt=1, leaderboardRegion=2
         var promptViaIndex = screen.Root[1];
-        var initialDisplay = promptViaIndex.style.display.value;
+        // Blink toggles style.visibility (NOT display) so the label keeps its layout
+        // space and the centered column does not reflow -- assert on visibility.
+        var initialVisibility = promptViaIndex.style.visibility.value;
 
         // Wait longer than one blink interval
         yield return new WaitForSeconds(0.9f);
 
-        var afterDisplay = promptViaIndex.style.display.value;
-        Assert.AreNotEqual(initialDisplay, afterDisplay,
-            "Prompt display should have toggled after 0.8s blink interval");
+        var afterVisibility = promptViaIndex.style.visibility.value;
+        Assert.AreNotEqual(initialVisibility, afterVisibility,
+            "Prompt visibility should have toggled after 0.8s blink interval");
         UnityEngine.Object.Destroy(screen.gameObject);
     }
 
@@ -252,7 +254,7 @@ public class StartScreenTests : InputTestFixture
         yield return null;
         var promptLabel = screen.Root[1] as Label;
         Assert.IsNotNull(promptLabel);
-        Assert.AreEqual("PRESS DOWN TO START", promptLabel.text);
+        Assert.AreEqual("PRESS DOWN OR TAP TO START", promptLabel.text);
         UnityEngine.Object.Destroy(screen.gameObject);
     }
 

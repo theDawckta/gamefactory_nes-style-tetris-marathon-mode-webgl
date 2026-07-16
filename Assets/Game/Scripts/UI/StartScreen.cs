@@ -93,6 +93,8 @@ public class StartScreen : BaseScreen
         }
 
         root.Add(LeaderboardRegion);
+
+        ApplyInitialHidden(); // no boot-frame flash before the state machine's first transition
     }
 
     private void Update()

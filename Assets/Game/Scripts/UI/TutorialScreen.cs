@@ -14,6 +14,16 @@ public class TutorialScreen : BaseScreen
 
     private int _shownFrame = -1;
 
+    private void Awake()
+    {
+        // UIDocument layering ladder (factory convention): game screens 0, mobile gesture
+        // overlay 100, modal overlays 200, HUD buttons 300. At the scene-authored default
+        // of 0 this screen rendered invisibly BEHIND the game UI and the full-screen
+        // GestureZones (overlay at 100) swallowed its dismiss taps -- with StartGame()
+        // deferred until dismissal, the game deadlocked on first launch on a phone.
+        GetComponent<UIDocument>().sortingOrder = 200;
+    }
+
     private void Start()
     {
         BuildUI();

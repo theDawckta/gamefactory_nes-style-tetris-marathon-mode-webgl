@@ -213,13 +213,15 @@ public class GameOverScreenTests : InputTestFixture
 
         // root children: gameOverLabel=0, finalScoreRegion=1, highScoreBannerRegion=2, promptLabel=3
         var promptLabel = screen.Root[3];
-        var initialDisplay = promptLabel.style.display.value;
+        // Blink toggles style.visibility (NOT display) so the label keeps its layout
+        // space and the centered column does not reflow -- assert on visibility.
+        var initialVisibility = promptLabel.style.visibility.value;
 
         yield return new WaitForSeconds(0.9f);
 
-        var afterDisplay = promptLabel.style.display.value;
-        Assert.AreNotEqual(initialDisplay, afterDisplay,
-            "Prompt display should have toggled after 0.8s blink interval");
+        var afterVisibility = promptLabel.style.visibility.value;
+        Assert.AreNotEqual(initialVisibility, afterVisibility,
+            "Prompt visibility should have toggled after 0.8s blink interval");
         UnityEngine.Object.Destroy(screen.gameObject);
     }
 

@@ -84,6 +84,8 @@ public class GameOverScreen : BaseScreen
         _promptLabel.style.marginTop = 32;
         if (_font != null) _promptLabel.style.unityFontDefinition = new StyleFontDefinition(_font);
         root.Add(_promptLabel);
+
+        ApplyInitialHidden(); // no boot-frame flash before the state machine's first transition
     }
 
     private void Update()
