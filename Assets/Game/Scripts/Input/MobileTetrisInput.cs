@@ -26,9 +26,22 @@ public class MobileTetrisInput : MonoBehaviour
 
     private IEnumerator Start()
     {
+        // Pick the GAME panel deterministically via the GameScreen's own document.
+        // "First UIDocument found" is no longer safe: tutorial/help layers live on a
+        // CLONED overlay PanelSettings (portrait width-fit exemption), and grabbing one
+        // of those here trips Unity's cross-panel assertion in UIDocument.set_panelSettings.
+        // The gesture zones belong on the MAIN game panel (they are percent-sized, so
+        // they cover the full screen in either orientation).
         PanelSettings panelSettings = null;
-        foreach (var doc in FindObjectsByType<UIDocument>(FindObjectsInactive.Include))
-            if (doc.panelSettings != null) { panelSettings = doc.panelSettings; break; }
+        var gameScreen = FindFirstObjectByType<GameScreen>(FindObjectsInactive.Include);
+        if (gameScreen != null)
+        {
+            var gsDoc = gameScreen.GetComponent<UIDocument>();
+            if (gsDoc != null) panelSettings = gsDoc.panelSettings;
+        }
+        if (panelSettings == null)
+            foreach (var doc in FindObjectsByType<UIDocument>(FindObjectsInactive.Include))
+                if (doc.panelSettings != null) { panelSettings = doc.panelSettings; break; }
         if (panelSettings == null) yield break;
 
         var overlayGo = new GameObject("MobileTetrisOverlay");

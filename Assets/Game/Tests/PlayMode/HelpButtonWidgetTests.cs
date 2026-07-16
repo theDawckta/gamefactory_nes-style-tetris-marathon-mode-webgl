@@ -111,12 +111,16 @@ public class HelpButtonWidgetTests
         _widget.Initialize(null, null);
         yield return WaitForBuild();
 
-        var layer = _widget.transform.Find("HelpButtonLayer");
-        Assert.IsNotNull(layer, "A HelpButtonLayer child GameObject must exist");
+        // The layer is a ROOT GameObject (nesting a UIDocument under another UIDocument
+        // forces the parent's PanelSettings -- the layer needs the overlay panel instead).
+        var layer = GameObject.Find("HelpButtonLayer");
+        Assert.IsNotNull(layer, "A root-level HelpButtonLayer GameObject must exist");
         var doc = layer.GetComponent<UIDocument>();
         Assert.IsNotNull(doc, "HelpButtonLayer must carry its own UIDocument");
         Assert.AreEqual(300f, doc.sortingOrder, 0.001f,
             "HelpButton document must sort above screens(0)/gesture overlay(100)/modals(200)");
+        Assert.AreEqual(1f, doc.panelSettings.match, 0.001f,
+            "HelpButton lives on the overlay panel (always match-height) so it stays finger-sized in portrait");
         Assert.AreSame(doc.rootVisualElement, _widget.HelpButton.parent,
             "HelpButton must be parented to its own document's root");
         Object.Destroy(_widget.gameObject);
@@ -129,7 +133,7 @@ public class HelpButtonWidgetTests
         _widget.Initialize(null, null);
         yield return WaitForBuild();
 
-        var doc = _widget.transform.Find("HelpButtonLayer").GetComponent<UIDocument>();
+        var doc = GameObject.Find("HelpButtonLayer").GetComponent<UIDocument>();
         Assert.AreEqual(PickingMode.Ignore, doc.rootVisualElement.pickingMode,
             "The always-on-top document root must not swallow taps meant for layers beneath");
         Assert.AreEqual(PickingMode.Position, _widget.HelpButton.pickingMode,

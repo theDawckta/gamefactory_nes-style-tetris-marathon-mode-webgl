@@ -18,6 +18,8 @@ public class StartScreen : BaseScreen
     private Label _promptLabel;
     private Coroutine _blinkCoroutine;
     private int _shownFrame = -1;
+    private const float ShownGuardSeconds = 0.4f;
+    private float _shownTime = -999f;
 
     private void Start()
     {
@@ -104,6 +106,9 @@ public class StartScreen : BaseScreen
         // transitioned us here still reads as wasPressedThisFrame, and would otherwise cascade
         // straight into starting a game before the player sees the menu.
         if (Time.frameCount == _shownFrame) return;
+        // Also ignore a short real-time window: on mobile WebGL the touch that brought us
+        // here can re-fire as a browser-synthesized mouse event a few frames later.
+        if (Time.unscaledTime - _shownTime < ShownGuardSeconds) return;
         // Down arrow (desktop) OR any tap/click (mobile -- no keyboard). Pointer.current covers
         // touchscreen and mouse; read via the Input System, the same path the down-arrow uses.
         bool down = Keyboard.current != null && Keyboard.current.downArrowKey.wasPressedThisFrame;
@@ -116,6 +121,7 @@ public class StartScreen : BaseScreen
     {
         base.Show();
         _shownFrame = Time.frameCount;
+        _shownTime = Time.unscaledTime;
         if (_blinkCoroutine != null) StopCoroutine(_blinkCoroutine);
         _blinkCoroutine = StartCoroutine(BlinkCoroutine());
         _leaderboardWidget?.Refresh();

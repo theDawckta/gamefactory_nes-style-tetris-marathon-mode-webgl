@@ -20,6 +20,7 @@ public class HelpButtonWidget : MonoBehaviour
     public Button HelpButton { get; private set; }
     private TutorialScreen _activeScreen;
     private UIDocument _buttonDoc;
+    private GameObject _layerGo;
     private bool _gameScreenVisible;
 
     // Signature kept from the original in-GameScreen version so SceneBootstrapper's
@@ -35,10 +36,16 @@ public class HelpButtonWidget : MonoBehaviour
         var hostDoc = GetComponent<UIDocument>();
         if (hostDoc == null || hostDoc.panelSettings == null) yield break;
 
+        // ROOT GameObject, deliberately NOT parented under this widget's GameObject: a
+        // UIDocument on a child of another UIDocument becomes a NESTED document and Unity
+        // asserts it must share the parent's PanelSettings -- but the whole point of this
+        // layer is a DIFFERENT (overlay) PanelSettings. Root-level = its own panel.
         var go = new GameObject("HelpButtonLayer");
-        go.transform.SetParent(transform, false);
+        _layerGo = go;
         _buttonDoc = go.AddComponent<UIDocument>();
-        _buttonDoc.panelSettings = hostDoc.panelSettings;
+        // Overlay panel (always match-height): on the main panel the portrait width-fit
+        // shrank this button to ~13 physical px on a phone -- untappable.
+        _buttonDoc.panelSettings = OverlayPanelHost.GetOrCreate(hostDoc.panelSettings);
         _buttonDoc.sortingOrder = 300;
 
         yield return null; // let the UIDocument build rootVisualElement
@@ -109,5 +116,9 @@ public class HelpButtonWidget : MonoBehaviour
     {
         if (_activeScreen != null)
             _activeScreen.OnHide -= OnTutorialHidden;
+        // The button layer is a root GameObject (see BuildOwnDocument) -- it does not die
+        // with this widget's hierarchy, so destroy it explicitly.
+        if (_layerGo != null)
+            Destroy(_layerGo);
     }
 }

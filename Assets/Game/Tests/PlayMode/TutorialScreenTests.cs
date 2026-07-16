@@ -84,14 +84,42 @@ public class TutorialScreenTests
     }
 
     [UnityTest]
-    public IEnumerator Diagram_HasExpectedMaxDimensions()
+    public IEnumerator Diagram_HasExpectedDimensions()
     {
         var screen = CreateScreen();
         screen.gameObject.SetActive(true);
         yield return null;
         var diagram = screen.Root.Q<VisualElement>("diagram");
-        Assert.AreEqual(540f, diagram.style.width.value.value);
-        Assert.AreEqual(270f, diagram.style.height.value.value);
+        // Fills the container's width; fixed 200-unit height on the overlay panel.
+        Assert.AreEqual(LengthUnit.Percent, diagram.style.width.value.unit);
+        Assert.AreEqual(100f, diagram.style.width.value.value);
+        Assert.AreEqual(200f, diagram.style.height.value.value);
+        Object.Destroy(screen.gameObject);
+    }
+
+    [UnityTest]
+    public IEnumerator Diagram_WithoutTexture_BuildsProceduralContent()
+    {
+        var screen = CreateScreen();
+        screen.gameObject.SetActive(true);
+        yield return null;
+        var diagram = screen.Root.Q<VisualElement>("diagram");
+        Assert.IsNotNull(diagram.Q<VisualElement>("diagramRow"),
+            "With no texture assigned, the procedural gesture diagram must be built");
+        Object.Destroy(screen.gameObject);
+    }
+
+    [UnityTest]
+    public IEnumerator UIDocument_UsesOverlayPanel_AtSortingOrder200()
+    {
+        var screen = CreateScreen();
+        screen.gameObject.SetActive(true);
+        yield return null;
+        var doc = screen.GetComponent<UIDocument>();
+        Assert.AreEqual(200f, doc.sortingOrder, 0.001f,
+            "Tutorial must sort above screens(0) and the gesture overlay(100)");
+        Assert.AreEqual(1f, doc.panelSettings.match, 0.001f,
+            "Tutorial lives on the overlay panel (always match-height) so it never shrinks with the portrait width-fit");
         Object.Destroy(screen.gameObject);
     }
 

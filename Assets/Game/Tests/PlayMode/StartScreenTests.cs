@@ -190,6 +190,9 @@ public class StartScreenTests : InputTestFixture
         bool fired = false;
         screen.OnStartPressed += () => fired = true;
 
+        // Input is ignored for a short real-time window after the screen shows (mobile
+        // ghost-event guard) -- wait it out before pressing.
+        yield return new WaitForSecondsRealtime(0.45f);
         Press(_keyboard.downArrowKey);
         yield return null;
 

@@ -78,7 +78,7 @@ public class GameOverScreen : BaseScreen
 
         root.Add(highScoreBannerRegion);
 
-        _promptLabel = new Label("PRESS DOWN TO RETURN");
+        _promptLabel = new Label("PRESS DOWN OR TAP TO RETURN");
         _promptLabel.style.fontSize = 18;
         _promptLabel.style.color = new StyleColor(Color.white);
         _promptLabel.style.marginTop = 32;
@@ -95,14 +95,25 @@ public class GameOverScreen : BaseScreen
         // transitioned us here) still reads as wasPressedThisFrame this frame, and would
         // otherwise immediately fire OnReturnPressed and skip the Game Over screen entirely.
         if (Time.frameCount == _shownFrame) return;
-        if (Keyboard.current != null && Keyboard.current.downArrowKey.wasPressedThisFrame)
+        // Also ignore a short real-time window: on mobile WebGL the touch that ended the game
+        // can re-fire as a browser-synthesized mouse event a few frames later.
+        if (Time.unscaledTime - _shownTime < ShownGuardSeconds) return;
+        // Down arrow (desktop) OR any tap/click (mobile -- no keyboard); same dual-input
+        // pattern as StartScreen (FULL-FLOW TOUCH: a phone must be able to leave this screen).
+        bool down = Keyboard.current != null && Keyboard.current.downArrowKey.wasPressedThisFrame;
+        bool tapped = Pointer.current != null && Pointer.current.press.wasPressedThisFrame;
+        if (down || tapped)
             OnReturnPressed?.Invoke();
     }
+
+    private const float ShownGuardSeconds = 0.4f;
+    private float _shownTime = -999f;
 
     public void ShowWithResult(int finalScore, bool isNewHighScore)
     {
         base.Show();
         _shownFrame = Time.frameCount;
+        _shownTime = Time.unscaledTime;
         if (_scoreValueLabel != null)
             _scoreValueLabel.text = finalScore.ToString();
         var highScoreBannerRegion = Root.Q<VisualElement>("highScoreBannerRegion");

@@ -21,7 +21,11 @@ public class TutorialScreen : BaseScreen
         // of 0 this screen rendered invisibly BEHIND the game UI and the full-screen
         // GestureZones (overlay at 100) swallowed its dismiss taps -- with StartGame()
         // deferred until dismissal, the game deadlocked on first launch on a phone.
-        GetComponent<UIDocument>().sortingOrder = 200;
+        var doc = GetComponent<UIDocument>();
+        // Overlay UI must NOT shrink with the portrait width-fit (see OverlayPanelHost) --
+        // on the main panel this modal rendered microscopic in portrait.
+        doc.panelSettings = OverlayPanelHost.GetOrCreate(doc.panelSettings);
+        doc.sortingOrder = 200;
     }
 
     private void Start()
@@ -55,7 +59,7 @@ public class TutorialScreen : BaseScreen
         tapTarget.style.bottom = 0;
         tapTarget.RegisterCallback<PointerDownEvent>(evt =>
         {
-            Dismiss();
+            DismissFromPointer();
             evt.StopPropagation();
         });
         root.Add(tapTarget);
@@ -81,7 +85,7 @@ public class TutorialScreen : BaseScreen
         container.RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
 
         // X close button: top-right corner of the container.
-        var closeBtn = new Button(() => Dismiss());
+        var closeBtn = new Button(() => DismissFromPointer());
         closeBtn.name = "closeButton";
         closeBtn.text = "X";
         closeBtn.style.position = Position.Absolute;
@@ -99,12 +103,13 @@ public class TutorialScreen : BaseScreen
         if (_font != null) closeBtn.style.unityFontDefinition = new StyleFontDefinition(_font);
         container.Add(closeBtn);
 
-        // Gesture diagram image: max display size 540x270 to stay legible on small phones.
+        // Gesture diagram: a texture can be assigned in the Inspector, but by default the
+        // diagram is DRAWN procedurally (Painter2D arrows + rotate arc + labels) -- crisp at
+        // any panel scale and no art-asset dependency (the design PNG never materialized).
         var diagram = new VisualElement();
         diagram.name = "diagram";
-        diagram.style.width = 540;
-        diagram.style.maxWidth = new StyleLength(new Length(100f, LengthUnit.Percent));
-        diagram.style.height = 270;
+        diagram.style.width = new StyleLength(new Length(100f, LengthUnit.Percent));
+        diagram.style.height = 200;
         diagram.style.marginTop = 32; // clear the absolutely-positioned close button
         diagram.style.marginBottom = 12;
         if (_diagramTexture != null)
@@ -115,8 +120,7 @@ public class TutorialScreen : BaseScreen
         }
         else
         {
-            // TODO: replace with custom sprite (tutorial gesture diagram PNG)
-            diagram.style.backgroundColor = new StyleColor(new Color(0.2f, 0.3f, 0.5f, 1f));
+            diagram.Add(BuildGestureDiagram());
         }
         container.Add(diagram);
 
@@ -143,10 +147,25 @@ public class TutorialScreen : BaseScreen
         Hide();
     }
 
+    // Pointer-driven dismissal (tap target / X button) additionally ignores a short
+    // real-time window after Show(): mobile browsers synthesize a duplicate mouse event
+    // shortly AFTER a touch on WebGL, so the same '?' tap that opened the tutorial
+    // re-fires as a ghost mouse-down a few frames later and would instantly dismiss it.
+    // The window applies only to pointer input, never to the programmatic Dismiss().
+    private void DismissFromPointer()
+    {
+        if (Time.unscaledTime - _shownTime < DismissGuardSeconds) return;
+        Dismiss();
+    }
+
+    private const float DismissGuardSeconds = 0.4f;
+    private float _shownTime = -999f;
+
     public override void Show()
     {
         base.Show();
         _shownFrame = Time.frameCount;
+        _shownTime = Time.unscaledTime;
         _playfieldController?.Pause();
     }
 
@@ -158,5 +177,137 @@ public class TutorialScreen : BaseScreen
         // has no subscriber from GameSessionController so this is a no-op there.
         OnHide?.Invoke();
         _playfieldController?.Resume();
+    }
+
+    // --- Procedural gesture diagram (Painter2D) ------------------------------------
+    // Two columns: LEFT half of the screen = D-pad-style move arrows (+down = drop,
+    // hold repeats), RIGHT half = swipe-to-rotate arc. Drawn as vector shapes so it is
+    // crisp at any panel scale; the default font has no arrow glyphs.
+
+    private VisualElement BuildGestureDiagram()
+    {
+        var row = new VisualElement();
+        row.name = "diagramRow";
+        row.style.flexDirection = FlexDirection.Row;
+        row.style.width = new StyleLength(new Length(100f, LengthUnit.Percent));
+        row.style.height = new StyleLength(new Length(100f, LengthUnit.Percent));
+
+        row.Add(BuildDiagramColumn(new MoveArrowsElement(),
+            "LEFT SIDE", "TAP = MOVE / DROP", "HOLD = KEEP MOVING"));
+
+        var divider = new VisualElement();
+        divider.style.width = 2;
+        divider.style.backgroundColor = new StyleColor(new Color(1f, 1f, 1f, 0.25f));
+        divider.style.marginLeft = 6;
+        divider.style.marginRight = 6;
+        row.Add(divider);
+
+        row.Add(BuildDiagramColumn(new RotateArcElement(),
+            "RIGHT SIDE", "SWIPE LEFT / RIGHT", "= ROTATE"));
+        return row;
+    }
+
+    private VisualElement BuildDiagramColumn(VisualElement art, params string[] lines)
+    {
+        var col = new VisualElement();
+        col.style.flexGrow = 1;
+        col.style.flexBasis = 0;
+        col.style.alignItems = Align.Center;
+        col.style.justifyContent = Justify.FlexStart;
+
+        art.style.width = new StyleLength(new Length(100f, LengthUnit.Percent));
+        art.style.height = 100;
+        art.style.marginBottom = 6;
+        col.Add(art);
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var label = new Label(lines[i]);
+            label.style.fontSize = i == 0 ? 14 : 11;
+            label.style.color = i == 0
+                ? new StyleColor(Color.yellow)
+                : new StyleColor(Color.white);
+            label.style.marginTop = i == 0 ? 0 : 3;
+            if (_font != null)
+                label.style.unityFontDefinition = new StyleFontDefinition(_font);
+            col.Add(label);
+        }
+        return col;
+    }
+
+    private static void DrawArrow(Painter2D p, Vector2 from, Vector2 to, float thickness)
+    {
+        var dir = (to - from).normalized;
+        var n = new Vector2(-dir.y, dir.x);
+        float head = thickness * 2.2f;
+        var shaftEnd = to - dir * (head * 1.4f);
+        p.fillColor = Color.white;
+        p.BeginPath();
+        p.MoveTo(from + n * (thickness * 0.5f));
+        p.LineTo(shaftEnd + n * (thickness * 0.5f));
+        p.LineTo(shaftEnd + n * head);
+        p.LineTo(to);
+        p.LineTo(shaftEnd - n * head);
+        p.LineTo(shaftEnd - n * (thickness * 0.5f));
+        p.LineTo(from - n * (thickness * 0.5f));
+        p.ClosePath();
+        p.Fill();
+    }
+
+    // Left column art: left/right move arrows + a down (soft-drop) arrow.
+    private class MoveArrowsElement : VisualElement
+    {
+        public MoveArrowsElement() { generateVisualContent += Draw; }
+
+        private static void Draw(MeshGenerationContext ctx)
+        {
+            var r = ctx.visualElement.contentRect;
+            if (r.width <= 10f || r.height <= 10f) return;
+            var p = ctx.painter2D;
+            float th = Mathf.Max(4f, r.height * 0.07f);
+            float midY = r.height * 0.35f;
+            float cx = r.width * 0.5f;
+            float len = Mathf.Min(r.width * 0.30f, r.height * 0.55f);
+            DrawArrow(p, new Vector2(cx - 10f, midY), new Vector2(cx - 10f - len, midY), th);
+            DrawArrow(p, new Vector2(cx + 10f, midY), new Vector2(cx + 10f + len, midY), th);
+            DrawArrow(p, new Vector2(cx, r.height * 0.50f), new Vector2(cx, r.height * 0.95f), th);
+        }
+    }
+
+    // Right column art: a clockwise arc with an arrowhead (swipe-to-rotate).
+    private class RotateArcElement : VisualElement
+    {
+        public RotateArcElement() { generateVisualContent += Draw; }
+
+        private static void Draw(MeshGenerationContext ctx)
+        {
+            var r = ctx.visualElement.contentRect;
+            if (r.width <= 10f || r.height <= 10f) return;
+            var p = ctx.painter2D;
+            var center = new Vector2(r.width * 0.5f, r.height * 0.5f);
+            float radius = Mathf.Min(r.width, r.height) * 0.34f;
+            float th = Mathf.Max(4f, r.height * 0.07f);
+
+            p.strokeColor = Color.white;
+            p.lineWidth = th;
+            p.lineCap = LineCap.Round;
+            p.BeginPath();
+            p.Arc(center, radius, 60f, 330f); // clockwise sweep, gap at the upper right
+            p.Stroke();
+
+            // Arrowhead at the arc's end, pointing along the clockwise tangent.
+            float end = 330f * Mathf.Deg2Rad;
+            var tip = center + new Vector2(Mathf.Cos(end), Mathf.Sin(end)) * radius;
+            var tangent = new Vector2(-Mathf.Sin(end), Mathf.Cos(end));
+            var n = new Vector2(-tangent.y, tangent.x);
+            float head = th * 2.2f;
+            p.fillColor = Color.white;
+            p.BeginPath();
+            p.MoveTo(tip + tangent * head * 1.6f);
+            p.LineTo(tip + n * head);
+            p.LineTo(tip - n * head);
+            p.ClosePath();
+            p.Fill();
+        }
     }
 }
