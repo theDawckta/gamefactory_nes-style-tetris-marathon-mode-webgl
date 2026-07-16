@@ -2,7 +2,8 @@
   "name": "GameTests.EditMode",
   "rootNamespace": "",
   "references": [
-    "Game"
+    "Game",
+    "com.onetimegames.coresystems"
   ],
   "includePlatforms": [
     "Editor"
