@@ -371,10 +371,12 @@ public class GameSessionControllerTests
         PlayerPrefs.DeleteKey("tetris_tutorial_seen");
     }
 
+    // The tutorial shows on EVERY game start by design (game-director decision) --
+    // a previously-seen flag must NOT suppress it.
     [UnityTest]
-    public IEnumerator ReturningPlayer_DoesNotShowTutorial()
+    public IEnumerator ReturningPlayer_StillShowsTutorialEveryStart()
     {
-        PlayerPrefs.SetInt("tetris_tutorial_seen", 1);
+        PlayerPrefs.SetInt("tetris_tutorial_seen", 1); // legacy flag must be ignored
         var ts = CreateTutorialScreen();
         SetField(_controller, "tutorialScreen", ts);
 
@@ -382,15 +384,15 @@ public class GameSessionControllerTests
         _controller.StartGame();
         yield return null;
 
-        Assert.IsFalse(ts.IsVisible, "Tutorial must NOT be shown for a returning player");
+        Assert.IsTrue(ts.IsVisible, "Tutorial must show on every game start, even for a returning player");
         Object.Destroy(ts.gameObject);
         PlayerPrefs.DeleteKey("tetris_tutorial_seen");
     }
 
     [UnityTest]
-    public IEnumerator ReturningPlayer_StartsPlayfieldImmediately()
+    public IEnumerator ReturningPlayer_PlayfieldStillDeferredUntilDismiss()
     {
-        PlayerPrefs.SetInt("tetris_tutorial_seen", 1);
+        PlayerPrefs.SetInt("tetris_tutorial_seen", 1); // legacy flag must be ignored
         var ts = CreateTutorialScreen();
         SetField(_controller, "tutorialScreen", ts);
 
@@ -398,8 +400,12 @@ public class GameSessionControllerTests
         _controller.StartGame();
         yield return null;
 
+        Assert.IsFalse(GetIsRunning(_playfield),
+            "Playfield must wait for the tutorial dismiss on every start");
+        ts.Dismiss();
+        yield return null;
         Assert.IsTrue(GetIsRunning(_playfield),
-            "Playfield must start immediately for a returning player");
+            "Playfield must start after the tutorial is dismissed");
         Object.Destroy(ts.gameObject);
         PlayerPrefs.DeleteKey("tetris_tutorial_seen");
     }

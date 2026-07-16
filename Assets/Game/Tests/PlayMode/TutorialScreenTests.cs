@@ -38,13 +38,17 @@ public class TutorialScreenTests
     }
 
     [UnityTest]
-    public IEnumerator TapTarget_ExistsAfterEnable()
+    public IEnumerator NoTapTarget_RootHandlesTapsEverywhere()
     {
+        // "Tap anywhere to dismiss" is handled by a bubble-phase handler on the ROOT
+        // (a tap on the dialog itself must dismiss too) -- no separate tapTarget element.
         var screen = CreateScreen();
         screen.gameObject.SetActive(true);
         yield return null;
-        Assert.IsNotNull(screen.Root.Q<VisualElement>("tapTarget"),
-            "tapTarget VisualElement must exist after Start()");
+        Assert.IsNull(screen.Root.Q<VisualElement>("tapTarget"),
+            "No separate tapTarget element -- the root handles taps everywhere");
+        Assert.IsNotNull(screen.Root.Q<VisualElement>("container"),
+            "container VisualElement must exist after Start()");
         Object.Destroy(screen.gameObject);
     }
 
@@ -198,16 +202,9 @@ public class TutorialScreenTests
     }
 
     [UnityTest]
-    public IEnumerator TutorialSeen_DefaultIsZero()
+    public IEnumerator Dismiss_DoesNotRecordSeenFlag()
     {
-        PlayerPrefs.DeleteKey("tetris_tutorial_seen");
-        Assert.AreEqual(0, PlayerPrefs.GetInt("tetris_tutorial_seen", 0));
-        yield return null;
-    }
-
-    [UnityTest]
-    public IEnumerator Dismiss_SetsPlayerPrefsFlag()
-    {
+        // The tutorial shows on EVERY game start by design -- no "seen" flag is written.
         PlayerPrefs.DeleteKey("tetris_tutorial_seen");
         var screen = CreateScreen();
         screen.gameObject.SetActive(true);
@@ -215,7 +212,21 @@ public class TutorialScreenTests
         screen.Show();
         yield return null; // advance past the shown frame
         screen.Dismiss();
-        Assert.AreEqual(1, PlayerPrefs.GetInt("tetris_tutorial_seen", 0));
+        Assert.AreEqual(0, PlayerPrefs.GetInt("tetris_tutorial_seen", 0),
+            "Dismiss must not persist a seen flag -- the tutorial shows every start");
+        Object.Destroy(screen.gameObject);
+    }
+
+    [UnityTest]
+    public IEnumerator Dismiss_WhenAlreadyHidden_IsNoOp()
+    {
+        var screen = CreateScreen();
+        screen.gameObject.SetActive(true);
+        yield return null;
+        bool fired = false;
+        screen.OnHide += () => fired = true;
+        screen.Dismiss(); // never shown -- must not fire OnHide
+        Assert.IsFalse(fired, "Dismiss on a hidden screen must be a no-op");
         Object.Destroy(screen.gameObject);
     }
 

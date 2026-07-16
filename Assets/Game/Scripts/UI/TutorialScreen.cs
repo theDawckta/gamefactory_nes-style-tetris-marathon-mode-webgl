@@ -49,20 +49,11 @@ public class TutorialScreen : BaseScreen
         root.style.alignItems = Align.Center;
         root.style.justifyContent = Justify.Center;
 
-        // Full-screen invisible tap target; receives pointer-down outside the container.
-        var tapTarget = new VisualElement();
-        tapTarget.name = "tapTarget";
-        tapTarget.style.position = Position.Absolute;
-        tapTarget.style.left = 0;
-        tapTarget.style.top = 0;
-        tapTarget.style.right = 0;
-        tapTarget.style.bottom = 0;
-        tapTarget.RegisterCallback<PointerDownEvent>(evt =>
-        {
-            DismissFromPointer();
-            evt.StopPropagation();
-        });
-        root.Add(tapTarget);
+        // "Tap ANYWHERE to dismiss" means anywhere -- including on the dialog itself.
+        // A single bubble-phase handler on the root sees every pointer-down in the
+        // subtree (dialog, diagram, X button, backdrop); no separate tap target and no
+        // StopPropagation on the container (which previously made dialog taps dead).
+        root.RegisterCallback<PointerDownEvent>(_ => DismissFromPointer());
 
         // Centered dialog container (renders on top of tapTarget -- added after it).
         var container = new VisualElement();
@@ -81,8 +72,6 @@ public class TutorialScreen : BaseScreen
         container.style.borderBottomRightRadius = 8;
         container.style.maxWidth = 600;
         container.style.width = new StyleLength(new Length(90f, LengthUnit.Percent));
-        // Prevent taps on the container body from reaching tapTarget below.
-        container.RegisterCallback<PointerDownEvent>(evt => evt.StopPropagation());
 
         // X close button: top-right corner of the container.
         var closeBtn = new Button(() => DismissFromPointer());
@@ -137,13 +126,14 @@ public class TutorialScreen : BaseScreen
     }
 
     /// <summary>
-    /// Dismiss the tutorial, record that it has been seen, and resume the game.
+    /// Dismiss the tutorial and resume the game. (The tutorial shows on EVERY game
+    /// start by design -- no "seen" flag is recorded.)
     /// Protected against cascading input on the frame Show() was called.
     /// </summary>
     public void Dismiss()
     {
+        if (!IsVisible) return;
         if (Time.frameCount == _shownFrame) return;
-        PlayerPrefs.SetInt("tetris_tutorial_seen", 1);
         Hide();
     }
 

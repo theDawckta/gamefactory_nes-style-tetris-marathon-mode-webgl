@@ -7,6 +7,20 @@ using UnityEngine.TestTools;
 [TestFixture]
 public class QAIntegrationTests
 {
+    // The tutorial shows on EVERY game start by design (game-director decision) and
+    // defers the playfield until dismissed -- start the game the way a player does:
+    // start, then dismiss the tutorial.
+    private static IEnumerator StartGamePastTutorial(GameSessionController controller)
+    {
+        controller.StartGame();
+        yield return null;
+        yield return null; // past TutorialScreen's shown-frame dismiss guard
+        var tutorial = Object.FindFirstObjectByType<TutorialScreen>(FindObjectsInactive.Include);
+        if (tutorial != null && tutorial.IsVisible)
+            tutorial.Dismiss();
+        yield return null;
+    }
+
     // Journey Step 1: Start Screen is visible on load
     [UnityTest]
     public IEnumerator StartScreen_IsVisible_OnLoad()
@@ -29,7 +43,7 @@ public class QAIntegrationTests
         yield return new WaitForSeconds(2f);
         var controller = Object.FindFirstObjectByType<GameSessionController>();
         Assert.IsNotNull(controller, "GameSessionController not found in scene");
-        controller.StartGame();
+        yield return StartGamePastTutorial(controller);
         yield return new WaitForSeconds(0.5f);
         var gameScreen = Object.FindFirstObjectByType<GameScreen>();
         var startScreen = Object.FindFirstObjectByType<StartScreen>();
@@ -45,7 +59,7 @@ public class QAIntegrationTests
         yield return new WaitForSeconds(2f);
         var controller = Object.FindFirstObjectByType<GameSessionController>();
         Assert.IsNotNull(controller);
-        controller.StartGame();
+        yield return StartGamePastTutorial(controller);
         yield return new WaitForSeconds(0.5f);
         var playfield = Object.FindFirstObjectByType<PlayfieldController>();
         Assert.IsNotNull(playfield, "PlayfieldController should exist in scene");
@@ -61,7 +75,7 @@ public class QAIntegrationTests
         yield return new WaitForSeconds(2f);
         var controller = Object.FindFirstObjectByType<GameSessionController>();
         Assert.IsNotNull(controller);
-        controller.StartGame();
+        yield return StartGamePastTutorial(controller);
         yield return new WaitForSeconds(0.5f);
         var playfield = Object.FindFirstObjectByType<PlayfieldController>();
         Assert.IsNotNull(playfield);
@@ -76,7 +90,7 @@ public class QAIntegrationTests
         yield return new WaitForSeconds(2f);
         var controller = Object.FindFirstObjectByType<GameSessionController>();
         Assert.IsNotNull(controller);
-        controller.StartGame();
+        yield return StartGamePastTutorial(controller);
         yield return new WaitForSeconds(0.5f);
         var playfield = Object.FindFirstObjectByType<PlayfieldController>();
         Assert.IsNotNull(playfield);
@@ -91,7 +105,7 @@ public class QAIntegrationTests
         yield return new WaitForSeconds(2f);
         var controller = Object.FindFirstObjectByType<GameSessionController>();
         Assert.IsNotNull(controller);
-        controller.StartGame();
+        yield return StartGamePastTutorial(controller);
         yield return new WaitForSeconds(0.5f);
         var playfield = Object.FindFirstObjectByType<PlayfieldController>();
         Assert.IsNotNull(playfield);
@@ -107,7 +121,7 @@ public class QAIntegrationTests
         yield return new WaitForSeconds(2f);
         var controller = Object.FindFirstObjectByType<GameSessionController>();
         Assert.IsNotNull(controller);
-        controller.StartGame();
+        yield return StartGamePastTutorial(controller);
         yield return new WaitForSeconds(0.5f);
         var playfield = Object.FindFirstObjectByType<PlayfieldController>();
         Assert.IsNotNull(playfield);
@@ -122,7 +136,7 @@ public class QAIntegrationTests
         yield return new WaitForSeconds(2f);
         var controller = Object.FindFirstObjectByType<GameSessionController>();
         Assert.IsNotNull(controller);
-        controller.StartGame();
+        yield return StartGamePastTutorial(controller);
         yield return new WaitForSeconds(0.5f);
         controller.GoToGameOver();
         yield return new WaitForSeconds(0.5f);
@@ -141,7 +155,7 @@ public class QAIntegrationTests
         yield return new WaitForSeconds(2f);
         var controller = Object.FindFirstObjectByType<GameSessionController>();
         Assert.IsNotNull(controller);
-        controller.StartGame();
+        yield return StartGamePastTutorial(controller);
         yield return new WaitForSeconds(0.5f);
         controller.GoToGameOver();
         yield return new WaitForSeconds(0.5f);
@@ -158,7 +172,7 @@ public class QAIntegrationTests
         yield return new WaitForSeconds(2f);
         var controller = Object.FindFirstObjectByType<GameSessionController>();
         Assert.IsNotNull(controller);
-        controller.StartGame();
+        yield return StartGamePastTutorial(controller);
         yield return new WaitForSeconds(0.5f);
         controller.GoToGameOver();
         yield return new WaitForSeconds(0.5f);
@@ -178,7 +192,7 @@ public class QAIntegrationTests
         yield return new WaitForSeconds(2f);
         var controller = Object.FindFirstObjectByType<GameSessionController>();
         Assert.IsNotNull(controller);
-        controller.StartGame();
+        yield return StartGamePastTutorial(controller);
         yield return new WaitForSeconds(0.5f);
         var charWidget = Object.FindFirstObjectByType<InGameCharacterWidget>();
         Assert.IsNotNull(charWidget, "InGameCharacterWidget should exist in scene");
@@ -195,7 +209,7 @@ public class QAIntegrationTests
             leaderboardClient.enabled = false;
         var controller = Object.FindFirstObjectByType<GameSessionController>();
         Assert.IsNotNull(controller);
-        controller.StartGame();
+        yield return StartGamePastTutorial(controller);
         yield return new WaitForSeconds(0.5f);
         controller.GoToGameOver();
         yield return new WaitForSeconds(1f);
@@ -230,7 +244,7 @@ public class QAIntegrationTests
         var controller = Object.FindFirstObjectByType<GameSessionController>();
         Assert.IsNotNull(controller);
         // start -> play
-        controller.StartGame();
+        yield return StartGamePastTutorial(controller);
         yield return new WaitForSeconds(0.5f);
         var gameScreen = Object.FindFirstObjectByType<GameScreen>();
         Assert.IsTrue(gameScreen.IsVisible, "GameScreen should show after start");
@@ -274,7 +288,7 @@ public class QAIntegrationTests
         Assert.IsNotNull(controller);
         // Call StartGame() -- if Hide()/Show() throw during rendering, this test fails
         // with InvalidOperationException: VisualElements cannot change their display style
-        controller.StartGame();
+        yield return StartGamePastTutorial(controller);
         yield return new WaitForSeconds(0.5f);
         var gameScreen = Object.FindFirstObjectByType<GameScreen>();
         Assert.IsTrue(gameScreen.IsVisible, "GameScreen should be visible -- if VisualElement modification during rendering threw, transition never completed");
@@ -288,7 +302,7 @@ public class QAIntegrationTests
         yield return new WaitForSeconds(2f);
         var controller = Object.FindFirstObjectByType<GameSessionController>();
         Assert.IsNotNull(controller);
-        controller.StartGame();
+        yield return StartGamePastTutorial(controller);
         yield return new WaitForSeconds(0.5f);
         controller.GoToGameOver();
         yield return new WaitForSeconds(0.5f);

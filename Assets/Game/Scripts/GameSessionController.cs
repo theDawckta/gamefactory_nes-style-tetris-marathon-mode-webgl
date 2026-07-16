@@ -102,9 +102,10 @@ public class GameSessionController : MonoBehaviour
         if (playfieldController != null)
             playfieldController.OnGameOver += OnGameOver;
 
-        // First-launch: show tutorial before spawning the first piece.
+        // Show the tutorial on EVERY game start (game-director decision), before
+        // spawning the first piece; dismissing it starts the game.
         // tutorialScreen null-check lets existing tests run without wiring the screen.
-        if (tutorialScreen != null && PlayerPrefs.GetInt("tetris_tutorial_seen", 0) == 0)
+        if (tutorialScreen != null)
         {
             _firstLaunchTutorialPending = true;
             tutorialScreen.OnHide += OnFirstLaunchTutorialDismissed;
