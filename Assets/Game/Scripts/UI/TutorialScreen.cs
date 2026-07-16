@@ -143,7 +143,10 @@ public class TutorialScreen : BaseScreen
     public override void Hide()
     {
         base.Hide();
-        _playfieldController?.Resume();
+        // OnHide fires first so the first-launch handler in GameSessionController can call
+        // StartGame() before Resume() sets _isRunning=true; for mid-game dismissals OnHide
+        // has no subscriber from GameSessionController so this is a no-op there.
         OnHide?.Invoke();
+        _playfieldController?.Resume();
     }
 }

@@ -14,11 +14,14 @@ public class GameSessionController : MonoBehaviour
     [SerializeField] private LeaderboardClient leaderboardClient;
     [SerializeField] private FactoryAuthController authController;
     [SerializeField] private LeaderboardWidget leaderboardWidget;
+    [SerializeField] private TutorialScreen tutorialScreen;
 
     private GameStateMachine _stateMachine;
     private List<LeaderboardEntry> _cachedTopFive;
     private int _finalScore;
     private MobileControls _mobileControls;
+    // Tracks whether the tutorial is pending completion before the first game start.
+    private bool _firstLaunchTutorialPending;
 
     private IEnumerator Start()
     {
@@ -95,16 +98,45 @@ public class GameSessionController : MonoBehaviour
         gameOverScreen?.Hide();
         gameScreen?.Show();
         _mobileControls?.Show();
-        playfieldController?.StartGame();
-        tetrisInputHandler?.Enable();
+
         if (playfieldController != null)
             playfieldController.OnGameOver += OnGameOver;
+
+        // First-launch: show tutorial before spawning the first piece.
+        // tutorialScreen null-check lets existing tests run without wiring the screen.
+        if (tutorialScreen != null && PlayerPrefs.GetInt("tetris_tutorial_seen", 0) == 0)
+        {
+            _firstLaunchTutorialPending = true;
+            tutorialScreen.OnHide += OnFirstLaunchTutorialDismissed;
+            tutorialScreen.Show();
+            // StartGame() and Enable() are deferred to OnFirstLaunchTutorialDismissed.
+        }
+        else
+        {
+            playfieldController?.StartGame();
+            tetrisInputHandler?.Enable();
+        }
+    }
+
+    private void OnFirstLaunchTutorialDismissed()
+    {
+        if (tutorialScreen != null)
+            tutorialScreen.OnHide -= OnFirstLaunchTutorialDismissed;
+        _firstLaunchTutorialPending = false;
+        playfieldController?.StartGame();
+        tetrisInputHandler?.Enable();
     }
 
     private void ExitPlaying()
     {
         if (playfieldController != null)
             playfieldController.OnGameOver -= OnGameOver;
+        // Clean up first-launch subscription if we exit before the tutorial was dismissed.
+        if (_firstLaunchTutorialPending && tutorialScreen != null)
+        {
+            tutorialScreen.OnHide -= OnFirstLaunchTutorialDismissed;
+            _firstLaunchTutorialPending = false;
+        }
     }
 
     private void OnGameOver()
@@ -172,6 +204,14 @@ public class GameSessionController : MonoBehaviour
         if (updated != null)
             _cachedTopFive = updated;
     }
+
+    // Pause/Resume: delegate to PlayfieldController, which freezes gravity and input
+    // processing without clearing board state. TutorialScreen.Show() calls Pause() and
+    // TutorialScreen.Hide() calls Resume() via its own _playfieldController reference;
+    // these wrappers are exposed so external callers can pause the session through
+    // GameSessionController without needing a direct reference to PlayfieldController.
+    public void Pause() => playfieldController?.Pause();
+    public void Resume() => playfieldController?.Resume();
 
     // QA Navigation Contract
     public void StartGame()
