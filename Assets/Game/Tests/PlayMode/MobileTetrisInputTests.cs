@@ -48,6 +48,13 @@ public class MobileTetrisInputTests
             .Invoke(target, new object[] { dir });
     }
 
+    private static void InvokeRightHold(MobileTetrisInput target, SwipeDirection dir)
+    {
+        typeof(MobileTetrisInput)
+            .GetMethod("OnRightZoneHoldRepeat", BindingFlags.NonPublic | BindingFlags.Instance)
+            .Invoke(target, new object[] { dir });
+    }
+
     [UnityTest]
     public IEnumerator Spawn_CreatesMobileTetrisInputComponent()
     {
@@ -100,12 +107,52 @@ public class MobileTetrisInputTests
     }
 
     [UnityTest]
-    public IEnumerator OnLeftZoneAction_Down_WhenEnabled_MovesPieceDown()
+    public IEnumerator OnLeftZoneAction_Down_DoesNothing_DropLivesOnRight()
     {
+        // Soft drop moved to the RIGHT zone (game-director decision) -- left is move-only.
         _input.Enable();
         var startY = _playfield.CurrentPiecePosition.y;
         InvokeLeft(_input, SwipeDirection.Down);
+        Assert.AreEqual(startY, _playfield.CurrentPiecePosition.y);
+        yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator OnRightZoneHoldRepeat_Down_WhenEnabled_MovesPieceDown()
+    {
+        _input.Enable();
+        var startY = _playfield.CurrentPiecePosition.y;
+        InvokeRightHold(_input, SwipeDirection.Down);
         Assert.AreEqual(startY - 1, _playfield.CurrentPiecePosition.y);
+        yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator OnRightZoneHoldRepeat_Horizontal_DoesNotRotateOrMove()
+    {
+        // A held horizontal swipe on the right must not machine-gun rotation -- rotate
+        // fires only from the discrete OnSwipe handler.
+        _input.Enable();
+        var startRot = _playfield.CurrentPieceRotation;
+        var startX = _playfield.CurrentPiecePosition.x;
+        InvokeRightHold(_input, SwipeDirection.Left);
+        InvokeRightHold(_input, SwipeDirection.Right);
+        Assert.AreEqual(startRot, _playfield.CurrentPieceRotation);
+        Assert.AreEqual(startX, _playfield.CurrentPiecePosition.x);
+        yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator OnRightZoneAction_Down_DoesNotRotate()
+    {
+        // Down is handled only by the hold-repeat handler; the swipe handler must not
+        // treat it as a rotate (and must not double-fire the drop).
+        _input.Enable();
+        var startRot = _playfield.CurrentPieceRotation;
+        var startY = _playfield.CurrentPiecePosition.y;
+        InvokeRight(_input, SwipeDirection.Down);
+        Assert.AreEqual(startRot, _playfield.CurrentPieceRotation);
+        Assert.AreEqual(startY, _playfield.CurrentPiecePosition.y);
         yield return null;
     }
 

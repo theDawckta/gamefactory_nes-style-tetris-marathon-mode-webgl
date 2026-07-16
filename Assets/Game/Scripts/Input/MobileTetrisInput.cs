@@ -4,8 +4,9 @@ using UnityEngine.UIElements;
 using OneTimeGames.CoreSystems;
 
 // Split-screen gesture controls for mobile web play, wired entirely in code so the scene
-// needs no manual setup. Left half of the screen handles movement (swipe left/right/down)
-// with NES DAS hold-repeat; right half handles rotation (swipe in either direction = CW rotate).
+// needs no manual setup. Left half of the screen handles horizontal movement (swipe
+// left/right, NES DAS hold-repeat); right half handles rotation (swipe left/right = CW
+// rotate) AND soft drop (swipe down, hold-repeat at DAS cadence).
 // Overlay auto-hides on desktop via MobileControlsOverlay browser feature-detection jslib.
 // Keyboard input via TetrisInputHandler is unaffected.
 public class MobileTetrisInput : MonoBehaviour
@@ -68,15 +69,22 @@ public class MobileTetrisInput : MonoBehaviour
         rightGo.transform.SetParent(overlayGo.transform, false);
         _rightZone = rightGo.AddComponent<GestureZone>();
         _rightZone.Configure(new Rect(50f, 0f, 50f, 100f));
+        _rightZone.SetHoldRepeatEnabled(true);
+        _rightZone.SetHoldRepeat(TetrisInputHandler.DasDelay, TetrisInputHandler.DasRepeat);
 
         yield return null; // let GestureZone Start() register with the overlay
 
-        // Left zone: OnHoldRepeat fires immediately on swipe and again after DasDelay,
-        // then every DasRepeat -- gives NES DAS without subscribing to OnSwipe (which
-        // would double-fire the first move via StartOrResetRepeat).
+        // Left zone (MOVE only): OnHoldRepeat fires immediately on swipe and again after
+        // DasDelay, then every DasRepeat -- gives NES DAS without subscribing to OnSwipe
+        // (which would double-fire the first move via StartOrResetRepeat).
         _leftZone.OnHoldRepeat += OnLeftZoneAction;
-        // Right zone: one CW rotate per distinct swipe gesture, no auto-repeat.
+        // Right zone (ROTATE + SOFT DROP): rotate is one CW rotate per distinct swipe
+        // gesture via OnSwipe; soft drop is swipe DOWN handled ONLY in the hold-repeat
+        // handler (immediate pulse + DAS cadence while held). The two handlers split by
+        // direction so a held horizontal swipe never machine-guns rotation, and Down
+        // never double-fires (it is deliberately absent from the OnSwipe handler).
         _rightZone.OnSwipe += OnRightZoneAction;
+        _rightZone.OnHoldRepeat += OnRightZoneHoldRepeat;
     }
 
     private void OnLeftZoneAction(SwipeDirection dir)
@@ -84,7 +92,6 @@ public class MobileTetrisInput : MonoBehaviour
         if (!_inputEnabled || _playfieldController == null) return;
         if (dir == SwipeDirection.Left) _playfieldController.MoveLeft();
         else if (dir == SwipeDirection.Right) _playfieldController.MoveRight();
-        else if (dir == SwipeDirection.Down) _playfieldController.SoftDrop();
     }
 
     private void OnRightZoneAction(SwipeDirection dir)
@@ -92,6 +99,12 @@ public class MobileTetrisInput : MonoBehaviour
         if (!_inputEnabled || _playfieldController == null) return;
         if (dir == SwipeDirection.Left || dir == SwipeDirection.Right)
             _playfieldController.Rotate();
+    }
+
+    private void OnRightZoneHoldRepeat(SwipeDirection dir)
+    {
+        if (!_inputEnabled || _playfieldController == null) return;
+        if (dir == SwipeDirection.Down) _playfieldController.SoftDrop();
     }
 
     public void Enable() => _inputEnabled = true;

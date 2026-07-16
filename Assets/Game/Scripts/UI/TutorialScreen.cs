@@ -183,7 +183,7 @@ public class TutorialScreen : BaseScreen
         row.style.height = new StyleLength(new Length(100f, LengthUnit.Percent));
 
         row.Add(BuildDiagramColumn(new MoveArrowsElement(),
-            "LEFT SIDE", "TAP = MOVE / DROP", "HOLD = KEEP MOVING"));
+            "LEFT SIDE", "TAP = MOVE", "HOLD = KEEP MOVING"));
 
         var divider = new VisualElement();
         divider.style.width = 2;
@@ -193,7 +193,7 @@ public class TutorialScreen : BaseScreen
         row.Add(divider);
 
         row.Add(BuildDiagramColumn(new RotateArcElement(),
-            "RIGHT SIDE", "SWIPE LEFT / RIGHT", "= ROTATE"));
+            "RIGHT SIDE", "SWIPE LEFT / RIGHT = ROTATE", "SWIPE DOWN = DROP"));
         return row;
     }
 
@@ -244,7 +244,7 @@ public class TutorialScreen : BaseScreen
         p.Fill();
     }
 
-    // Left column art: left/right move arrows + a down (soft-drop) arrow.
+    // Left column art: left/right move arrows (movement only -- drop lives on the right).
     private class MoveArrowsElement : VisualElement
     {
         public MoveArrowsElement() { generateVisualContent += Draw; }
@@ -255,16 +255,16 @@ public class TutorialScreen : BaseScreen
             if (r.width <= 10f || r.height <= 10f) return;
             var p = ctx.painter2D;
             float th = Mathf.Max(4f, r.height * 0.07f);
-            float midY = r.height * 0.35f;
+            float midY = r.height * 0.5f;
             float cx = r.width * 0.5f;
             float len = Mathf.Min(r.width * 0.30f, r.height * 0.55f);
             DrawArrow(p, new Vector2(cx - 10f, midY), new Vector2(cx - 10f - len, midY), th);
             DrawArrow(p, new Vector2(cx + 10f, midY), new Vector2(cx + 10f + len, midY), th);
-            DrawArrow(p, new Vector2(cx, r.height * 0.50f), new Vector2(cx, r.height * 0.95f), th);
         }
     }
 
-    // Right column art: a clockwise arc with an arrowhead (swipe-to-rotate).
+    // Right column art: a clockwise arc with an arrowhead (swipe-to-rotate) plus a down
+    // (soft-drop) arrow beside it.
     private class RotateArcElement : VisualElement
     {
         public RotateArcElement() { generateVisualContent += Draw; }
@@ -274,8 +274,8 @@ public class TutorialScreen : BaseScreen
             var r = ctx.visualElement.contentRect;
             if (r.width <= 10f || r.height <= 10f) return;
             var p = ctx.painter2D;
-            var center = new Vector2(r.width * 0.5f, r.height * 0.5f);
-            float radius = Mathf.Min(r.width, r.height) * 0.34f;
+            var center = new Vector2(r.width * 0.38f, r.height * 0.5f);
+            float radius = Mathf.Min(r.width, r.height) * 0.32f;
             float th = Mathf.Max(4f, r.height * 0.07f);
 
             p.strokeColor = Color.white;
@@ -298,6 +298,10 @@ public class TutorialScreen : BaseScreen
             p.LineTo(tip - n * head);
             p.ClosePath();
             p.Fill();
+
+            // Down (soft-drop) arrow to the right of the rotate arc.
+            float dx = r.width * 0.82f;
+            DrawArrow(p, new Vector2(dx, r.height * 0.18f), new Vector2(dx, r.height * 0.85f), th);
         }
     }
 }
