@@ -41,6 +41,8 @@ public class TetrisInputHandlerTests : InputTestFixture
         Assert.AreEqual(0, _handler.MoveDirection);
         Assert.IsFalse(_handler.IsSoftDropping);
         Assert.IsFalse(_handler.RotatePressedThisFrame);
+        Assert.IsFalse(_handler.RotateCCWPressedThisFrame);
+        Assert.IsFalse(_handler.HardDropPressedThisFrame);
     }
 
     [UnityTest]
@@ -103,6 +105,34 @@ public class TetrisInputHandlerTests : InputTestFixture
         bool firstFrame = _handler.RotatePressedThisFrame;
         yield return null;
         bool secondFrame = _handler.RotatePressedThisFrame;
+        Assert.IsTrue(firstFrame);
+        Assert.IsFalse(secondFrame);
+    }
+
+    [UnityTest]
+    public IEnumerator ZPress_RotateCCWPressedThisFrameTrue()
+    {
+        Press(_keyboard.zKey);
+        yield return null;
+        Assert.IsTrue(_handler.RotateCCWPressedThisFrame);
+    }
+
+    [UnityTest]
+    public IEnumerator SpacePress_HardDropPressedThisFrameTrue()
+    {
+        Press(_keyboard.spaceKey);
+        yield return null;
+        Assert.IsTrue(_handler.HardDropPressedThisFrame);
+    }
+
+    [UnityTest]
+    public IEnumerator SpaceHeld_HardDropPressedThisFrame_OnlyOnFirstFrame()
+    {
+        Press(_keyboard.spaceKey);
+        yield return null;
+        bool firstFrame = _handler.HardDropPressedThisFrame;
+        yield return null;
+        bool secondFrame = _handler.HardDropPressedThisFrame;
         Assert.IsTrue(firstFrame);
         Assert.IsFalse(secondFrame);
     }

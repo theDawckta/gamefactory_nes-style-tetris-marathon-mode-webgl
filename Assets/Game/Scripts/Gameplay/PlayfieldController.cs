@@ -97,13 +97,17 @@ public class PlayfieldController : MonoBehaviour
 
         if (_input.RotatePressedThisFrame)
         {
-            int newRot = (CurrentPieceRotation + 1) & 3;
-            if (!Collides(CurrentPieceType, newRot, CurrentPiecePosition))
-            {
-                CurrentPieceRotation = newRot;
-                _lastActionWasRotation = true;
-                if (_isLockDelay) ResetLockDelay();
-            }
+            TryRotate(1);
+        }
+
+        if (_input.RotateCCWPressedThisFrame)
+        {
+            TryRotate(-1);
+        }
+
+        if (_input.HardDropPressedThisFrame)
+        {
+            HardDrop();
         }
     }
 
@@ -311,7 +315,7 @@ public class PlayfieldController : MonoBehaviour
     {
         CurrentPieceType = NextPieceType;
         CurrentPieceRotation = 0;
-        CurrentPiecePosition = new Vector2Int(3, 18);
+        CurrentPiecePosition = new Vector2Int(4, 18);
         _lastActionWasRotation = false;
         _gravityAccum = 0f;
         _isLockDelay = false;
@@ -372,16 +376,66 @@ public class PlayfieldController : MonoBehaviour
         _gravityAccum = 0f;
     }
 
-    public void Rotate()
+    // Lowest position the active piece can occupy by moving straight down from where it is.
+    // Reused by the ghost-piece renderer and by HardDrop.
+    public Vector2Int GetGhostPosition()
+    {
+        var pos = CurrentPiecePosition;
+        while (!Collides(CurrentPieceType, CurrentPieceRotation, pos + Vector2Int.down))
+            pos += Vector2Int.down;
+        return pos;
+    }
+
+    // Instantly drops the active piece to the bottom and locks it (bypasses lock delay).
+    public void HardDrop()
     {
         if (!_isRunning) return;
-        int newRot = (CurrentPieceRotation + 1) & 3;
-        if (!Collides(CurrentPieceType, newRot, CurrentPiecePosition))
+        var landing = GetGhostPosition();
+        int dropDistance = CurrentPiecePosition.y - landing.y;
+        CurrentPiecePosition = landing;
+        if (dropDistance > 0)
         {
-            CurrentPieceRotation = newRot;
-            _lastActionWasRotation = true;
-            if (_isLockDelay) ResetLockDelay();
+            // The piece actually fell, so it wasn't seated by a rotation: clear the
+            // T-spin flag and award hard-drop points (+2/cell, Guideline standard).
+            _lastActionWasRotation = false;
+            CurrentScore += dropDistance * 2;
+            OnScoreChanged?.Invoke(CurrentScore);
         }
+        // dropDistance == 0: the piece already rests (e.g. just kicked into a snug
+        // T-spin notch); keep _lastActionWasRotation so DetectTSpin still credits it.
+        LockPiece();
+    }
+
+    public void Rotate()
+    {
+        TryRotate(1);
+    }
+
+    public void RotateCCW()
+    {
+        TryRotate(-1);
+    }
+
+    // Rotates the active piece by direction (+1 CW, -1 CCW) using SRS wall kicks:
+    // tries each candidate kick offset in order and commits the first that fits.
+    private bool TryRotate(int direction)
+    {
+        if (!_isRunning) return false;
+        int newRot = (CurrentPieceRotation + direction) & 3;
+        var kicks = TetrominoData.GetKicks(CurrentPieceType, CurrentPieceRotation, newRot);
+        foreach (var kick in kicks)
+        {
+            var candidate = CurrentPiecePosition + kick;
+            if (!Collides(CurrentPieceType, newRot, candidate))
+            {
+                CurrentPieceRotation = newRot;
+                CurrentPiecePosition = candidate;
+                _lastActionWasRotation = true;
+                if (_isLockDelay) ResetLockDelay();
+                return true;
+            }
+        }
+        return false;
     }
 
     public TetrominoType? GetCell(int x, int y)

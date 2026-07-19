@@ -195,6 +195,28 @@ public class MobileTetrisInputTests
         Assert.AreEqual(startRot, _playfield.CurrentPieceRotation);
         yield return null;
     }
+
+    [UnityTest]
+    public IEnumerator OnRightZoneAction_Up_WhenEnabled_HardDropsPiece()
+    {
+        _input.Enable();
+        bool locked = false;
+        _playfield.OnPieceLocked += () => locked = true;
+        InvokeRight(_input, SwipeDirection.Up);
+        Assert.IsTrue(locked, "Up swipe should hard-drop (and thus lock) the piece");
+        yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator OnRightZoneAction_Up_WhenDisabled_DoesNotHardDrop()
+    {
+        _input.Disable();
+        bool locked = false;
+        _playfield.OnPieceLocked += () => locked = true;
+        InvokeRight(_input, SwipeDirection.Up);
+        Assert.IsFalse(locked);
+        yield return null;
+    }
 }
 
 public class PlayfieldControllerActionTests
@@ -302,6 +324,34 @@ public class PlayfieldControllerActionTests
         var startRot = _controller.CurrentPieceRotation;
         _controller.Rotate();
         Assert.AreEqual(startRot, _controller.CurrentPieceRotation);
+        yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator RotateCCW_WhenRunning_DecrementsRotation()
+    {
+        var startRot = _controller.CurrentPieceRotation;
+        _controller.RotateCCW();
+        Assert.AreEqual((startRot + 3) & 3, _controller.CurrentPieceRotation);
+        yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator HardDrop_WhenRunning_LandsAtBottom()
+    {
+        _controller.HardDrop();
+        // After locking, the next piece spawns at the top (4,18).
+        Assert.AreEqual(18, _controller.CurrentPiecePosition.y);
+        yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator HardDrop_WhenNotRunning_DoesNotMove()
+    {
+        _controller.StopGame();
+        var startPos = _controller.CurrentPiecePosition;
+        _controller.HardDrop();
+        Assert.AreEqual(startPos, _controller.CurrentPiecePosition);
         yield return null;
     }
 }

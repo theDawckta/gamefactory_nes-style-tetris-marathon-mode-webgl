@@ -224,6 +224,51 @@ public class PlayfieldRendererTests
         }
     }
 
+    // ── Rendering: ghost piece ────────────────────────────────────────────────
+
+    [UnityTest]
+    public IEnumerator Update_GhostPiece_RendersTranslucentAtLandingPosition()
+    {
+        var go = Track(new GameObject());
+        var renderer = go.AddComponent<PlayfieldRenderer>();
+        var controller = go.AddComponent<PlayfieldController>();
+        var region = new VisualElement();
+        controller.StartGame();
+        yield return null;
+        renderer.Initialize(region, controller);
+        renderer.SetActive(true);
+        yield return null; // Update renders
+
+        var cells = GetCellElements(renderer);
+        var pieceColor = TetrominoData.GetColor(controller.CurrentPieceType);
+        var ghostPos = controller.GetGhostPosition();
+        var activePos = controller.CurrentPiecePosition;
+        var pieces = TetrominoData.GetCells(controller.CurrentPieceType, controller.CurrentPieceRotation);
+
+        // The piece spawns at the top and the ghost lands at the bottom, so no ghost
+        // cell overlaps the (opaque) active piece; guard anyway.
+        var activeSet = new HashSet<Vector2Int>();
+        foreach (var c in pieces) activeSet.Add(activePos + c);
+
+        int ghostChecked = 0;
+        foreach (var c in pieces)
+        {
+            var g = ghostPos + c;
+            if (g.x < 0 || g.x >= PlayfieldController.GridWidth ||
+                g.y < 0 || g.y >= PlayfieldController.GridHeight) continue;
+            if (activeSet.Contains(g)) continue;
+
+            var bg = cells[g.x, g.y].style.backgroundColor.value;
+            Assert.Less(bg.a, 1f, $"Ghost cell ({g.x},{g.y}) should be translucent");
+            Assert.Greater(bg.a, 0f, $"Ghost cell ({g.x},{g.y}) should be visible");
+            Assert.AreEqual(pieceColor.r, bg.r, 0.01f, $"Ghost cell ({g.x},{g.y}) red");
+            Assert.AreEqual(pieceColor.g, bg.g, 0.01f, $"Ghost cell ({g.x},{g.y}) green");
+            Assert.AreEqual(pieceColor.b, bg.b, 0.01f, $"Ghost cell ({g.x},{g.y}) blue");
+            ghostChecked++;
+        }
+        Assert.Greater(ghostChecked, 0, "Expected at least one distinct ghost cell to verify");
+    }
+
     // ── SetActive ─────────────────────────────────────────────────────────────
 
     [UnityTest]

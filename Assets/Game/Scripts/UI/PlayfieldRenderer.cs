@@ -11,6 +11,7 @@ public class PlayfieldRenderer : MonoBehaviour
 
     private static readonly Color EmptyFill = new Color(0.05f, 0.05f, 0.05f);
     private static readonly Color EmptyBorder = new Color(0.15f, 0.15f, 0.15f);
+    private const float GhostAlpha = 0.25f;
 
     public void Initialize(VisualElement playfieldRegion, PlayfieldController controller)
     {
@@ -65,6 +66,17 @@ public class PlayfieldRenderer : MonoBehaviour
                 activeCells[cx, cy] = true;
         }
 
+        // Ghost piece: same shape projected straight down to its landing position.
+        var ghostCells = new bool[PlayfieldController.GridWidth, PlayfieldController.GridHeight];
+        var ghostPos = _playfieldController.GetGhostPosition();
+        foreach (var c in pieces)
+        {
+            int gx = ghostPos.x + c.x;
+            int gy = ghostPos.y + c.y;
+            if (gx >= 0 && gx < PlayfieldController.GridWidth && gy >= 0 && gy < PlayfieldController.GridHeight)
+                ghostCells[gx, gy] = true;
+        }
+
         for (int y = 0; y < PlayfieldController.GridHeight; y++)
         {
             for (int x = 0; x < PlayfieldController.GridWidth; x++)
@@ -79,14 +91,22 @@ public class PlayfieldRenderer : MonoBehaviour
                 else
                 {
                     Color locked = _playfieldController.GetCellColor(x, y);
-                    if (locked == Color.clear)
+                    if (locked != Color.clear)
                     {
-                        ApplyEmptyStyle(cellEl);
+                        // Settled block -- always drawn over the ghost.
+                        cellEl.style.backgroundColor = new StyleColor(locked);
+                        SetBorder(cellEl, DarkenBorder(locked));
+                    }
+                    else if (ghostCells[x, y])
+                    {
+                        var ghost = activePieceColor;
+                        ghost.a = GhostAlpha;
+                        cellEl.style.backgroundColor = new StyleColor(ghost);
+                        SetBorder(cellEl, DarkenBorder(activePieceColor));
                     }
                     else
                     {
-                        cellEl.style.backgroundColor = new StyleColor(locked);
-                        SetBorder(cellEl, DarkenBorder(locked));
+                        ApplyEmptyStyle(cellEl);
                     }
                 }
             }

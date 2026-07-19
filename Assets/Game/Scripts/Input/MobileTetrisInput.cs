@@ -99,6 +99,8 @@ public class MobileTetrisInput : MonoBehaviour
         if (!_inputEnabled || _playfieldController == null) return;
         if (dir == SwipeDirection.Left || dir == SwipeDirection.Right)
             _playfieldController.Rotate();
+        else if (dir == SwipeDirection.Up)
+            _playfieldController.HardDrop();
     }
 
     private void OnRightZoneHoldRepeat(SwipeDirection dir)

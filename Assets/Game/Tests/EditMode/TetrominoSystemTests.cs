@@ -171,4 +171,75 @@ public class TetrominoSystemTests
                 $"Level {i + 1} should be <= level {i}");
         }
     }
+
+    // ── SRS wall kicks (TetrominoData.GetKicks) ───────────────────────────────
+
+    private static readonly (int from, int to)[] AdjacentTransitions =
+    {
+        (0, 1), (1, 0), (1, 2), (2, 1), (2, 3), (3, 2), (3, 0), (0, 3),
+    };
+
+    [Test]
+    public void GetKicks_FirstOffsetIsAlwaysZero_ForJlstzAndI()
+    {
+        foreach (var type in new[] { TetrominoType.T, TetrominoType.I })
+        {
+            foreach (var (from, to) in AdjacentTransitions)
+            {
+                var kicks = TetrominoData.GetKicks(type, from, to);
+                Assert.AreEqual(Vector2Int.zero, kicks[0],
+                    $"{type} {from}->{to} first kick must be (0,0)");
+            }
+        }
+    }
+
+    [Test]
+    public void GetKicks_JlstzAndI_HaveFiveCandidatesPerTransition()
+    {
+        foreach (var type in new[] { TetrominoType.J, TetrominoType.L, TetrominoType.S,
+                                     TetrominoType.T, TetrominoType.Z, TetrominoType.I })
+        {
+            foreach (var (from, to) in AdjacentTransitions)
+                Assert.AreEqual(5, TetrominoData.GetKicks(type, from, to).Length,
+                    $"{type} {from}->{to} should have 5 kick candidates");
+        }
+    }
+
+    [Test]
+    public void GetKicks_OPiece_ReturnsOnlyZeroOffset()
+    {
+        foreach (var (from, to) in AdjacentTransitions)
+        {
+            var kicks = TetrominoData.GetKicks(TetrominoType.O, from, to);
+            Assert.AreEqual(1, kicks.Length);
+            Assert.AreEqual(Vector2Int.zero, kicks[0]);
+        }
+    }
+
+    [Test]
+    public void GetKicks_ReverseTransition_NegatesForwardOffsets()
+    {
+        // SRS property: every reverse kick is the negation of the forward kick.
+        foreach (var type in new[] { TetrominoType.T, TetrominoType.I })
+        {
+            var fwd = TetrominoData.GetKicks(type, 0, 1);
+            var rev = TetrominoData.GetKicks(type, 1, 0);
+            for (int i = 0; i < fwd.Length; i++)
+                Assert.AreEqual(-fwd[i], rev[i], $"{type} test {i} reverse should negate forward");
+        }
+    }
+
+    [Test]
+    public void IPiece_VerticalStates_OccupyDistinctColumns()
+    {
+        // SRS-canonical I: R (rot1) and L (rot3) must sit in different columns,
+        // otherwise the I wall-kick table cannot resolve correctly.
+        var r1 = TetrominoData.GetCells(TetrominoType.I, 1);
+        var r3 = TetrominoData.GetCells(TetrominoType.I, 3);
+        int col1 = r1[0].x;
+        int col3 = r3[0].x;
+        foreach (var c in r1) Assert.AreEqual(col1, c.x, "rot1 should be a single column");
+        foreach (var c in r3) Assert.AreEqual(col3, c.x, "rot3 should be a single column");
+        Assert.AreNotEqual(col1, col3, "I vertical states must be in distinct columns");
+    }
 }

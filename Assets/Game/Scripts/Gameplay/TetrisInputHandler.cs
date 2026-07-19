@@ -10,6 +10,8 @@ public class TetrisInputHandler : MonoBehaviour
     public int MoveDirection { get; private set; }
     public bool IsSoftDropping { get; private set; }
     public bool RotatePressedThisFrame { get; private set; }
+    public bool RotateCCWPressedThisFrame { get; private set; }
+    public bool HardDropPressedThisFrame { get; private set; }
 
     private bool _inputEnabled = true;
     private int _dasDirection;
@@ -19,6 +21,8 @@ public class TetrisInputHandler : MonoBehaviour
     private void Update()
     {
         RotatePressedThisFrame = false;
+        RotateCCWPressedThisFrame = false;
+        HardDropPressedThisFrame = false;
         MoveDirection = 0;
         IsSoftDropping = false;
 
@@ -53,6 +57,8 @@ public class TetrisInputHandler : MonoBehaviour
 
         IsSoftDropping = kb != null && kb.downArrowKey.isPressed;
         RotatePressedThisFrame = kb != null && kb.upArrowKey.wasPressedThisFrame;
+        RotateCCWPressedThisFrame = kb != null && kb.zKey.wasPressedThisFrame;
+        HardDropPressedThisFrame = kb != null && kb.spaceKey.wasPressedThisFrame;
     }
 
     private void UpdateDas(int dir)
@@ -98,6 +104,8 @@ public class TetrisInputHandler : MonoBehaviour
         MoveDirection = 0;
         IsSoftDropping = false;
         RotatePressedThisFrame = false;
+        RotateCCWPressedThisFrame = false;
+        HardDropPressedThisFrame = false;
         _dasDirection = 0;
         _dasTimer = 0f;
         _dasFired = false;
