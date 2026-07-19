@@ -6,6 +6,9 @@
 # See: https://github.com/github/gitignore/tree/main/Global
 #
 .utmp/
+# Unity-MCP (AI Game Developer) client config -- machine/session-specific (absolute Library/
+# server path + per-project port/token). Generated locally per checkout, never committed.
+.mcp.json
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
