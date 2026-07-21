@@ -53,25 +53,15 @@ public class TutorialScreenTests
     }
 
     [UnityTest]
-    public IEnumerator CloseButton_ExistsInContainer()
+    public IEnumerator NoCloseButton_TapAnywhereIsTheOnlyDismiss()
     {
+        // The X button was removed: "Tap anywhere to dismiss" is the only affordance,
+        // so a separate close control would contradict the instruction.
         var screen = CreateScreen();
         screen.gameObject.SetActive(true);
         yield return null;
-        var container = screen.Root.Q<VisualElement>("container");
-        Assert.IsNotNull(container.Q<Button>("closeButton"),
-            "closeButton must be a child of container");
-        Object.Destroy(screen.gameObject);
-    }
-
-    [UnityTest]
-    public IEnumerator CloseButton_HasXLabel()
-    {
-        var screen = CreateScreen();
-        screen.gameObject.SetActive(true);
-        yield return null;
-        var btn = screen.Root.Q<Button>("closeButton");
-        Assert.AreEqual("X", btn.text);
+        Assert.IsNull(screen.Root.Q<Button>("closeButton"),
+            "There must be no close button -- the whole overlay is the dismiss target");
         Object.Destroy(screen.gameObject);
     }
 

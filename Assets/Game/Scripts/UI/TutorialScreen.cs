@@ -73,24 +73,9 @@ public class TutorialScreen : BaseScreen
         container.style.maxWidth = 600;
         container.style.width = new StyleLength(new Length(90f, LengthUnit.Percent));
 
-        // X close button: top-right corner of the container.
-        var closeBtn = new Button(() => DismissFromPointer());
-        closeBtn.name = "closeButton";
-        closeBtn.text = "X";
-        closeBtn.style.position = Position.Absolute;
-        closeBtn.style.top = 8;
-        closeBtn.style.right = 8;
-        closeBtn.style.width = 32;
-        closeBtn.style.height = 32;
-        closeBtn.style.fontSize = 16;
-        closeBtn.style.color = new StyleColor(Color.white);
-        closeBtn.style.backgroundColor = new StyleColor(new Color(0.3f, 0.3f, 0.3f, 1f));
-        closeBtn.style.borderTopLeftRadius = 4;
-        closeBtn.style.borderTopRightRadius = 4;
-        closeBtn.style.borderBottomLeftRadius = 4;
-        closeBtn.style.borderBottomRightRadius = 4;
-        if (_font != null) closeBtn.style.unityFontDefinition = new StyleFontDefinition(_font);
-        container.Add(closeBtn);
+        // No close button: the whole overlay is a tap-to-dismiss target (see the
+        // root PointerDownEvent handler above and the "Tap anywhere to dismiss" prompt),
+        // so a separate X control was redundant and contradicted the instruction.
 
         // Gesture diagram: a texture can be assigned in the Inspector, but by default the
         // diagram is DRAWN procedurally (Painter2D arrows + rotate arc + labels) -- crisp at
@@ -99,7 +84,7 @@ public class TutorialScreen : BaseScreen
         diagram.name = "diagram";
         diagram.style.width = new StyleLength(new Length(100f, LengthUnit.Percent));
         diagram.style.height = 200;
-        diagram.style.marginTop = 32; // clear the absolutely-positioned close button
+        diagram.style.marginTop = 8;
         diagram.style.marginBottom = 12;
         if (_diagramTexture != null)
         {
@@ -193,7 +178,8 @@ public class TutorialScreen : BaseScreen
         row.Add(divider);
 
         row.Add(BuildDiagramColumn(new RotateArcElement(),
-            "RIGHT SIDE", "SWIPE LEFT / RIGHT = ROTATE", "SWIPE DOWN = DROP"));
+            "RIGHT SIDE", "SWIPE = ROTATE",
+            "SWIPE DOWN = SOFT DROP", "SWIPE UP = INSTANT DROP"));
         return row;
     }
 
@@ -202,22 +188,31 @@ public class TutorialScreen : BaseScreen
         var col = new VisualElement();
         col.style.flexGrow = 1;
         col.style.flexBasis = 0;
+        // min-width:0 lets the column shrink below its content's intrinsic width. Without
+        // it a flex item defaults to min-width:auto, so a long non-wrapping label refuses
+        // to shrink and the whole row overflows off the screen edge (the phone bug).
+        col.style.minWidth = 0;
         col.style.alignItems = Align.Center;
         col.style.justifyContent = Justify.FlexStart;
 
         art.style.width = new StyleLength(new Length(100f, LengthUnit.Percent));
-        art.style.height = 100;
+        art.style.height = 76;
         art.style.marginBottom = 6;
         col.Add(art);
 
         for (int i = 0; i < lines.Length; i++)
         {
             var label = new Label(lines[i]);
-            label.style.fontSize = i == 0 ? 14 : 11;
+            label.style.fontSize = i == 0 ? 13 : 10;
             label.style.color = i == 0
                 ? new StyleColor(Color.yellow)
                 : new StyleColor(Color.white);
             label.style.marginTop = i == 0 ? 0 : 3;
+            // Wrap long instructions and center them within the (narrow) column instead of
+            // letting them run off the panel.
+            label.style.whiteSpace = WhiteSpace.Normal;
+            label.style.unityTextAlign = TextAnchor.MiddleCenter;
+            label.style.width = new StyleLength(new Length(100f, LengthUnit.Percent));
             if (_font != null)
                 label.style.unityFontDefinition = new StyleFontDefinition(_font);
             col.Add(label);
@@ -264,7 +259,7 @@ public class TutorialScreen : BaseScreen
     }
 
     // Right column art: a clockwise arc with an arrowhead (swipe-to-rotate) plus a down
-    // (soft-drop) arrow beside it.
+    // (soft-drop) arrow and an up (instant-drop) arrow beside it.
     private class RotateArcElement : VisualElement
     {
         public RotateArcElement() { generateVisualContent += Draw; }
@@ -299,9 +294,11 @@ public class TutorialScreen : BaseScreen
             p.ClosePath();
             p.Fill();
 
-            // Down (soft-drop) arrow to the right of the rotate arc.
-            float dx = r.width * 0.82f;
-            DrawArrow(p, new Vector2(dx, r.height * 0.18f), new Vector2(dx, r.height * 0.85f), th);
+            // Down (soft-drop) and up (instant-drop) arrows to the right of the rotate arc.
+            float downX = r.width * 0.92f;
+            DrawArrow(p, new Vector2(downX, r.height * 0.18f), new Vector2(downX, r.height * 0.85f), th);
+            float upX = r.width * 0.74f;
+            DrawArrow(p, new Vector2(upX, r.height * 0.85f), new Vector2(upX, r.height * 0.18f), th);
         }
     }
 }
