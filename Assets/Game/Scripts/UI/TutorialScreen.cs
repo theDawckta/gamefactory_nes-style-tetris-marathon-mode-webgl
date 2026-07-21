@@ -77,9 +77,9 @@ public class TutorialScreen : BaseScreen
         // root PointerDownEvent handler above and the "Tap anywhere to dismiss" prompt),
         // so a separate X control was redundant and contradicted the instruction.
 
-        // Gesture diagram: a texture can be assigned in the Inspector, but by default the
-        // diagram is DRAWN procedurally (Painter2D arrows + rotate arc + labels) -- crisp at
-        // any panel scale and no art-asset dependency (the design PNG never materialized).
+        // Gesture legend: a texture can be assigned in the Inspector, but by default the
+        // legend is built as two text columns (BuildGestureDiagram) -- crisp at any panel
+        // scale and no art-asset dependency (the design PNG never materialized).
         var diagram = new VisualElement();
         diagram.name = "diagram";
         diagram.style.width = new StyleLength(new Length(100f, LengthUnit.Percent));
@@ -154,10 +154,11 @@ public class TutorialScreen : BaseScreen
         _playfieldController?.Resume();
     }
 
-    // --- Procedural gesture diagram (Painter2D) ------------------------------------
-    // Two columns: LEFT half of the screen = D-pad-style move arrows (+down = drop,
-    // hold repeats), RIGHT half = swipe-to-rotate arc. Drawn as vector shapes so it is
-    // crisp at any panel scale; the default font has no arrow glyphs.
+    // --- Gesture legend (text only) ------------------------------------------------
+    // Two text columns split by a vertical divider, mirroring the LEFT / RIGHT halves of the
+    // screen the player taps. Each column is a yellow header at the TOP with its gesture lines
+    // beneath. Arrow graphics were removed on purpose: they cramped the panel, the text names
+    // every gesture, and the default font has no arrow glyphs anyway.
 
     private VisualElement BuildGestureDiagram()
     {
@@ -167,47 +168,50 @@ public class TutorialScreen : BaseScreen
         row.style.width = new StyleLength(new Length(100f, LengthUnit.Percent));
         row.style.height = new StyleLength(new Length(100f, LengthUnit.Percent));
 
-        row.Add(BuildDiagramColumn(new MoveArrowsElement(),
-            "LEFT SIDE", "TAP = MOVE", "HOLD = KEEP MOVING"));
+        // LEFT half = movement. Wording matches the real gestures (MobileTetrisInput left zone:
+        // swipe left/right moves, holding repeats it).
+        row.Add(BuildDiagramColumn(
+            "LEFT SIDE",
+            "SWIPE LEFT/RIGHT = MOVE",
+            "SWIPE LEFT/RIGHT + HOLD = KEEP MOVING"));
 
         var divider = new VisualElement();
         divider.style.width = 2;
         divider.style.backgroundColor = new StyleColor(new Color(1f, 1f, 1f, 0.25f));
-        divider.style.marginLeft = 6;
-        divider.style.marginRight = 6;
+        divider.style.marginLeft = 10;
+        divider.style.marginRight = 10;
         row.Add(divider);
 
-        row.Add(BuildDiagramColumn(new RotateArcElement(),
-            "RIGHT SIDE", "SWIPE = ROTATE",
-            "SWIPE DOWN = SOFT DROP", "SWIPE UP = INSTANT DROP"));
+        // RIGHT half = rotate + drop (MobileTetrisInput right zone: swipe left/right rotates,
+        // swipe up hard-drops, swipe-down-and-hold soft-drops).
+        row.Add(BuildDiagramColumn(
+            "RIGHT SIDE",
+            "SWIPE LEFT/RIGHT = ROTATE",
+            "SWIPE DOWN + HOLD = SOFT DROP",
+            "SWIPE UP = INSTANT DROP"));
         return row;
     }
 
-    private VisualElement BuildDiagramColumn(VisualElement art, params string[] lines)
+    // A column: yellow header at the TOP, then the gesture instruction lines beneath it.
+    private VisualElement BuildDiagramColumn(params string[] lines)
     {
         var col = new VisualElement();
         col.style.flexGrow = 1;
         col.style.flexBasis = 0;
-        // min-width:0 lets the column shrink below its content's intrinsic width. Without
-        // it a flex item defaults to min-width:auto, so a long non-wrapping label refuses
-        // to shrink and the whole row overflows off the screen edge (the phone bug).
+        // min-width:0 lets the column shrink below its content's intrinsic width; without it a
+        // flex item defaults to min-width:auto and a long non-wrapping label pushes the row off
+        // the screen edge (the original phone overflow bug).
         col.style.minWidth = 0;
         col.style.alignItems = Align.Center;
         col.style.justifyContent = Justify.FlexStart;
 
-        art.style.width = new StyleLength(new Length(100f, LengthUnit.Percent));
-        art.style.height = 76;
-        art.style.marginBottom = 6;
-        col.Add(art);
-
         for (int i = 0; i < lines.Length; i++)
         {
+            bool isHeader = i == 0;
             var label = new Label(lines[i]);
-            label.style.fontSize = i == 0 ? 13 : 10;
-            label.style.color = i == 0
-                ? new StyleColor(Color.yellow)
-                : new StyleColor(Color.white);
-            label.style.marginTop = i == 0 ? 0 : 3;
+            label.style.fontSize = isHeader ? 15 : 11;
+            label.style.color = isHeader ? new StyleColor(Color.yellow) : new StyleColor(Color.white);
+            label.style.marginTop = isHeader ? 0 : (i == 1 ? 14 : 10);
             // Wrap long instructions and center them within the (narrow) column instead of
             // letting them run off the panel.
             label.style.whiteSpace = WhiteSpace.Normal;
@@ -218,87 +222,5 @@ public class TutorialScreen : BaseScreen
             col.Add(label);
         }
         return col;
-    }
-
-    private static void DrawArrow(Painter2D p, Vector2 from, Vector2 to, float thickness)
-    {
-        var dir = (to - from).normalized;
-        var n = new Vector2(-dir.y, dir.x);
-        float head = thickness * 2.2f;
-        var shaftEnd = to - dir * (head * 1.4f);
-        p.fillColor = Color.white;
-        p.BeginPath();
-        p.MoveTo(from + n * (thickness * 0.5f));
-        p.LineTo(shaftEnd + n * (thickness * 0.5f));
-        p.LineTo(shaftEnd + n * head);
-        p.LineTo(to);
-        p.LineTo(shaftEnd - n * head);
-        p.LineTo(shaftEnd - n * (thickness * 0.5f));
-        p.LineTo(from - n * (thickness * 0.5f));
-        p.ClosePath();
-        p.Fill();
-    }
-
-    // Left column art: left/right move arrows (movement only -- drop lives on the right).
-    private class MoveArrowsElement : VisualElement
-    {
-        public MoveArrowsElement() { generateVisualContent += Draw; }
-
-        private static void Draw(MeshGenerationContext ctx)
-        {
-            var r = ctx.visualElement.contentRect;
-            if (r.width <= 10f || r.height <= 10f) return;
-            var p = ctx.painter2D;
-            float th = Mathf.Max(4f, r.height * 0.07f);
-            float midY = r.height * 0.5f;
-            float cx = r.width * 0.5f;
-            float len = Mathf.Min(r.width * 0.30f, r.height * 0.55f);
-            DrawArrow(p, new Vector2(cx - 10f, midY), new Vector2(cx - 10f - len, midY), th);
-            DrawArrow(p, new Vector2(cx + 10f, midY), new Vector2(cx + 10f + len, midY), th);
-        }
-    }
-
-    // Right column art: a clockwise arc with an arrowhead (swipe-to-rotate) plus a down
-    // (soft-drop) arrow and an up (instant-drop) arrow beside it.
-    private class RotateArcElement : VisualElement
-    {
-        public RotateArcElement() { generateVisualContent += Draw; }
-
-        private static void Draw(MeshGenerationContext ctx)
-        {
-            var r = ctx.visualElement.contentRect;
-            if (r.width <= 10f || r.height <= 10f) return;
-            var p = ctx.painter2D;
-            var center = new Vector2(r.width * 0.38f, r.height * 0.5f);
-            float radius = Mathf.Min(r.width, r.height) * 0.32f;
-            float th = Mathf.Max(4f, r.height * 0.07f);
-
-            p.strokeColor = Color.white;
-            p.lineWidth = th;
-            p.lineCap = LineCap.Round;
-            p.BeginPath();
-            p.Arc(center, radius, 60f, 330f); // clockwise sweep, gap at the upper right
-            p.Stroke();
-
-            // Arrowhead at the arc's end, pointing along the clockwise tangent.
-            float end = 330f * Mathf.Deg2Rad;
-            var tip = center + new Vector2(Mathf.Cos(end), Mathf.Sin(end)) * radius;
-            var tangent = new Vector2(-Mathf.Sin(end), Mathf.Cos(end));
-            var n = new Vector2(-tangent.y, tangent.x);
-            float head = th * 2.2f;
-            p.fillColor = Color.white;
-            p.BeginPath();
-            p.MoveTo(tip + tangent * head * 1.6f);
-            p.LineTo(tip + n * head);
-            p.LineTo(tip - n * head);
-            p.ClosePath();
-            p.Fill();
-
-            // Down (soft-drop) and up (instant-drop) arrows to the right of the rotate arc.
-            float downX = r.width * 0.92f;
-            DrawArrow(p, new Vector2(downX, r.height * 0.18f), new Vector2(downX, r.height * 0.85f), th);
-            float upX = r.width * 0.74f;
-            DrawArrow(p, new Vector2(upX, r.height * 0.85f), new Vector2(upX, r.height * 0.18f), th);
-        }
     }
 }
